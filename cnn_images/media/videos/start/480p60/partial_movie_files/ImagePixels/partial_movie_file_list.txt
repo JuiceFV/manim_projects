@@ -1,0 +1,2 @@
+# This file is used internally by FFMPEG.
+file 'file:D:/GitHub/manim_projects/cnn_images/media/videos/start/480p60/partial_movie_files/ImagePixels/473301780_123398499_1009579261.mp4'
