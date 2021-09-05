@@ -1,0 +1,12 @@
+# This file is used internally by FFMPEG.
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/450974505_2899034756_660613686.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_1744070020_2473427504.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_691468477_2473427504.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_398514950_1279733228.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_291205987_2959944108.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_398514950_1003589594.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_2077058271_3660411432.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_398514950_3495641996.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_3880550547_154006191.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_398514950_1456864215.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/DefaultTemplate/34786186_922679414_913173246.mp4'
