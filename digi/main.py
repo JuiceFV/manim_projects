@@ -1,7 +1,10 @@
 from manim import *
-from introduction import Intro
+from custom.characters.pi_creature import *
+from custom.characters.pi_creature_animations import PiCreatureSays, RemovePiCreatureBubble, Blink
 
 
-class DefaultTemplate(Scene):
+class Intro(Scene):
     def construct(self):
-        Intro(self).play()
+        pi = PiCreature("plain").flip().to_corner(RIGHT + DOWN)
+        self.play(PiCreatureSays(pi, Tex("$\\psi$ hello"), target_mode="angry"))
+        self.play(RemovePiCreatureBubble(pi))
