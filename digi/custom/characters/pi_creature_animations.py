@@ -1,10 +1,11 @@
 from manim import *
 
-from ..drawings import SpeechBubble, ThoughtBubble
+from .pi_creature import *
+from ..drawings import SpeechBubble
 
 
 class Blink(ApplyMethod):
-    def __init__(self, pi_creature, **kwargs):
+    def __init__(self, pi_creature: PiCreature, **kwargs) -> None:
         super(Blink, self).__init__(pi_creature.blink, rate_func=squish_rate_func(there_and_back), **kwargs)
 
 
@@ -20,12 +21,26 @@ class PiCreatureBubbleIntroduction(AnimationGroup):
         "content_introduction_kwargs": {},
         "look_at_arg": None,
     }
+    parent_defaults = {
+        'lag_ratio': 0.0,
+        'run_time': 1.0,
+        'rate_func': smooth,
+        'name': None,
+        'remover': False,
+        'suspend_mobject_updating': True,
+    }
 
-    def __init__(self, pi_creature, *content, **kwargs):
+    def __init__(self, pi_creature: PiCreature, *content, **kwargs) -> None:
         for key, value in self.self_defaults.items():
             setattr(self, key, kwargs.get(key, value))
             if key in kwargs:
                 kwargs.pop(key)
+
+        for key, value in self.parent_defaults.items():
+            self.parent_defaults[key] = kwargs.get(key, value)
+            if key in kwargs:
+                kwargs.pop(key)
+
         if len(kwargs) > 0:
             raise TypeError(f"Wrong argument is passed {kwargs.keys()[0]}")
 
@@ -50,15 +65,16 @@ class PiCreatureBubbleIntroduction(AnimationGroup):
         )
         AnimationGroup.__init__(
             self, change_mode, bubble_creation, content_introduction,
-            **kwargs
+            **self.parent_defaults
         )
 
 
 class PiCreatureSays(PiCreatureBubbleIntroduction):
-    def __init__(self, pi_creature, *content, **kwargs):
-        # TODO: **kwargs overthrown default
-        kwargs.update({"target_mode": "speaking", "bubble_class": SpeechBubble})
-        super(PiCreatureSays, self).__init__(pi_creature, *content, **kwargs)
+    self_cfg = {"target_mode": "speaking", "bubble_class": SpeechBubble}
+
+    def __init__(self, pi_creature: PiCreature, *content, **kwargs) -> None:
+        self.self_cfg.update(kwargs)
+        super(PiCreatureSays, self).__init__(pi_creature, *content, **self.self_cfg)
 
 
 class RemovePiCreatureBubble(AnimationGroup):
