@@ -1,9 +1,12 @@
+from __future__ import annotations
 import os
 from abc import ABC
 from pathlib import Path
 from typing import Union
+
+import numpy as np
 from manim import *
-from ..drawings import ThoughtBubble
+from ..drawings import ThoughtBubble, Bubble, SpeechBubble
 
 PI_CREATURE_SCALE_FACTOR = 0.5
 
@@ -75,7 +78,7 @@ class PiCreature(SVGMobject, ABC):
         if isinstance(mobject, PiCreature):
             self.mode = mobject.get_mode()
 
-    def name_parts(self):
+    def name_parts(self) -> None:
         self.mouth = self.submobjects[MOUTH_INDEX]
         self.body = self.submobjects[BODY_INDEX]
         self.pupils = VGroup(*[
@@ -89,7 +92,7 @@ class PiCreature(SVGMobject, ABC):
         self.eye_parts = VGroup(self.eyes, self.pupils)
         self.parts_named = True
 
-    def init_colors(self, propagate_colors: bool = False) -> SVGMobject:
+    def init_colors(self, propagate_colors: bool = False) -> PiCreature:
         super(PiCreature, self).init_colors(propagate_colors)
         if not self.parts_named:
             self.name_parts()
@@ -100,7 +103,7 @@ class PiCreature(SVGMobject, ABC):
         self.init_pupils()
         return self
 
-    def init_pupils(self):
+    def init_pupils(self) -> None:
         # Instead of what is drawn, make new circles.
         # This is mostly because the paths associated
         # with the eyes in all the drawings got slightly
@@ -131,17 +134,17 @@ class PiCreature(SVGMobject, ABC):
             )
             pupil.add(dot)
 
-    def copy(self) -> SVGMobject:
+    def copy(self) -> PiCreature:
         copy_mobject = SVGMobject.copy(self)
         copy_mobject.name_parts()
         return copy_mobject
 
-    def set_color(self, color) -> SVGMobject:
-        self.body.set_fill(color)
+    def set_color(self, new_color=None, opacity=None, recuse=True) -> PiCreature:
+        self.body.set_fill(new_color, opacity, recuse)
         self.color = color
         return self
 
-    def change_mode(self, mode: str) -> SVGMobject:
+    def change_mode(self, mode: str) -> PiCreature:
         new_self = self.__class__(
             mode=mode,
         )
@@ -157,10 +160,10 @@ class PiCreature(SVGMobject, ABC):
         self.mode = mode
         return self
 
-    def get_mode(self):
+    def get_mode(self) -> str:
         return self.mode
 
-    def look(self, direction: np.array) -> Union[None, SVGMobject]:
+    def look(self, direction: np.array) -> Union[None, PiCreature]:
         norm = np.linalg.norm(direction)
         if norm == 0:
             return
@@ -178,7 +181,7 @@ class PiCreature(SVGMobject, ABC):
         self.pupils[1].align_to(self.pupils[0], DOWN)
         return self
 
-    def look_at(self, point_or_mobject):
+    def look_at(self, point_or_mobject: Union[Mobject, np.ndarray]) -> PiCreature:
         if isinstance(point_or_mobject, Mobject):
             point = point_or_mobject.get_center()
         else:
@@ -186,24 +189,24 @@ class PiCreature(SVGMobject, ABC):
         self.look(point - self.eyes.get_center())
         return self
 
-    def change(self, new_mode: str, look_at_arg=None):
+    def change(self, new_mode: str, look_at_arg=None) -> PiCreature:
         self.change_mode(new_mode)
         if look_at_arg is not None:
             self.look_at(look_at_arg)
         return self
 
-    def get_looking_direction(self):
+    def get_looking_direction(self) -> np.ndarray:
         vect = self.pupils.get_center() - self.eyes.get_center()
         return normalize(vect)
 
-    def get_look_at_spot(self):
+    def get_look_at_spot(self) -> np.ndarray:
         return self.eyes.get_center() + self.get_looking_direction()
 
-    def is_flipped(self):
+    def is_flipped(self) -> bool:
         return self.eyes.submobjects[0].get_center()[0] > \
                self.eyes.submobjects[1].get_center()[0]
 
-    def blink(self):
+    def blink(self) -> PiCreature:
         eye_parts = self.eye_parts
         eye_bottom_y = eye_parts.get_bottom()[1]
         eye_parts.apply_function(
@@ -211,7 +214,7 @@ class PiCreature(SVGMobject, ABC):
         )
         return self
 
-    def to_corner(self, vect=None, **kwargs):
+    def to_corner(self, vect: np.ndarray = None, **kwargs) -> PiCreature:
         if vect is not None:
             SVGMobject.to_corner(self, vect, **kwargs)
         else:
@@ -219,10 +222,8 @@ class PiCreature(SVGMobject, ABC):
             self.to_corner(DOWN + LEFT, **kwargs)
         return self
 
-    def get_bubble(self, content, **kwargs):
-        bubble_class = kwargs.get('bubble_class', ThoughtBubble)
-        if 'bubble_class' in kwargs:
-            kwargs.pop('bubble_class')
+    def get_bubble(self, content: Union[SVGMobject, str], **kwargs) -> Bubble:
+        bubble_class = kwargs.pop('bubble_class', ThoughtBubble)
         bubble = bubble_class(**kwargs)
         if len(content) > 0:
             if isinstance(content[0], str):
@@ -236,12 +237,12 @@ class PiCreature(SVGMobject, ABC):
         self.bubble = bubble
         return bubble
 
-    def make_eye_contact(self, pi_creature):
+    def make_eye_contact(self, pi_creature: PiCreature) -> PiCreature:
         self.look_at(pi_creature.eyes)
         pi_creature.look_at(self.eyes)
         return self
 
-    def shrug(self) -> SVGMobject:
+    def shrug(self) -> PiCreature:
         self.change_mode("shruggie")
         points = self.mouth.get_points()
         top_mouth_point, bottom_mouth_point = [
@@ -252,11 +253,11 @@ class PiCreature(SVGMobject, ABC):
         return self
 
 
-def get_all_pi_creature_modes():
+def get_all_pi_creature_modes() -> list:
     result = []
     prefix = PiCreature.self_defaults["file_name_prefix"] + "_"
     suffix = ".svg"
-    for file in os.listdir(Path(__file__).parent/"svgs"):
+    for file in os.listdir(Path(__file__).parent / "svgs"):
         if file.startswith(prefix) and file.endswith(suffix):
             result.append(
                 file[len(prefix):-len(suffix)]
@@ -266,3 +267,28 @@ def get_all_pi_creature_modes():
 
 class Alex(PiCreature, ABC):
     pass  # Nothing more than an alternative name
+
+
+class Randolph(PiCreature, ABC):
+    pass  # Nothing more than an alternative name
+
+
+class Mortimer(PiCreature, ABC):
+    self_cfg = {
+        "color": GREY_BROWN,
+        "flip_at_start": True,
+    }
+
+    def __init__(self, mode: str = "plain", **kwargs):
+        self.self_cfg.update(kwargs)
+        super(Mortimer, self).__init__(mode=mode, **self.self_cfg)
+
+
+class Mathematician(PiCreature, ABC):
+    self_cfg = {
+        "color": GREY,
+    }
+
+    def __init__(self, mode: str = "plain", **kwargs):
+        self.self_cfg.update(kwargs)
+        super(Mathematician, self).__init__(mode=mode, **self.self_cfg)
