@@ -1,46 +1,25 @@
 from abc import ABC
 
-import numpy as np
-from pathlib import Path
 from manim import *
+from pathlib import Path
+from .utils import parent_kwargs
 
 
 class Bubble(SVGMobject, ABC):
-    self_defaults = {
-        "direction": LEFT,
-        "center_point": ORIGIN,
-        "content_scale_factor": 0.75,
-        "bubble_center_adjustment_factor": 1. / 8,
-        "file_name": None,
-    }
-    parent_defaults = {
-        "color": BLACK,
-        "fill_opacity": 0.8,
-        "stroke_color": WHITE,
-        "stroke_width": 3,
-        "height": 5,
-        "width": 8,
-    }
 
     def __init__(self, **kwargs):
         self.direction_was_specified = ("direction" in kwargs)
 
-        for key, value in self.self_defaults.items():
-            setattr(self, key, kwargs.get(key, value))
-            if key in kwargs:
-                kwargs.pop(key)
-
-        for key, value in self.parent_defaults.items():
-            self.parent_defaults[key] = kwargs.get(key, value)
-            if key in kwargs:
-                kwargs.pop(key)
-
-        if len(kwargs) > 0:
-            raise TypeError(f"Wrong argument is passed {kwargs.keys()[0]}")
+        self.direction = kwargs.pop("direction", LEFT)
+        self.center_point = kwargs.pop("center_point", ORIGIN)
+        self.content_scale_factor = kwargs.pop("content_scale_factor", 0.75)
+        self.bubble_center_adjustment_factor = kwargs.pop("bubble_center_adjustment_factor", 1. / 8)
+        self.file_name = kwargs.pop("file_name", None)
 
         if self.file_name is None:
             raise Exception("Must invoke Bubble subclass")
-        super(Bubble, self).__init__(self.file_name, **self.parent_defaults)
+
+        super(Bubble, self).__init__(self.file_name, **parent_kwargs(self, **kwargs))
 
         self.center()
         self.stretch_to_fit_height(self.height)
@@ -126,16 +105,16 @@ class Bubble(SVGMobject, ABC):
 
 class SpeechBubble(Bubble, ABC):
     def __init__(self, **kwargs):
-        # TODO: **kwargs overthrown default
-        kwargs.update({"file_name": str(Path(__file__).parent/"svgs/Bubbles_speech.svg"), "height": 4})
-        super(SpeechBubble, self).__init__(**kwargs)
+        default_kwargs = {"file_name": str(Path(__file__).parent/"svgs/Bubbles_speech.svg"), "height": 4}
+        default_kwargs.update(kwargs)
+        super(SpeechBubble, self).__init__(**default_kwargs)
 
 
 class ThoughtBubble(Bubble, ABC):
     def __init__(self, **kwargs):
-        # TODO: **kwargs overthrown default
-        kwargs.update({"file_name": str(Path(__file__).parent/"svgs/Bubbles_thought.svg")})
-        super(ThoughtBubble, self).__init__(**kwargs)
+        default_kwargs = {"file_name": str(Path(__file__).parent/"svgs/Bubbles_thought.svg")}
+        default_kwargs.update(kwargs)
+        super(ThoughtBubble, self).__init__(**default_kwargs)
         self.submobjects.sort(
             key=lambda m: m.get_bottom()[1]
         )
@@ -143,3 +122,74 @@ class ThoughtBubble(Bubble, ABC):
     def make_green_screen(self):
         self.submobjects[-1].set_fill(PURE_GREEN, opacity=1)
         return self
+
+
+class VideoIcon(SVGMobject, ABC):
+    def __init__(self, **kwargs):
+        default_kwargs = {"file_name": str(Path(__file__).parent/"svgs/video_icon"), "width": config.frame_width / 16}
+        default_kwargs.update(kwargs)
+        super(VideoIcon, self).__init__(**default_kwargs)
+        self.center()
+        self.set_stroke(color=WHITE, width=kwargs.pop("stroke_width", 3))
+        self.set_fill(color=WHITE, opacity=kwargs.pop("fill_opacity", 0))
+
+    @property
+    def triangle(self) -> Mobject:
+        return self[1]
+
+    @property
+    def rectangle(self) -> Mobject:
+        return self[0]
+
+
+class VideoSeries(VGroup, ABC):
+    def __init__(self, **kwargs):
+        self.num_videos = kwargs.pop("num_videos", 6)
+        self.gradient_colors = kwargs.pop("gradient_colors", [BLUE_B, BLUE_D])
+        self.video_icon_kwargs = kwargs.pop("video_icon_kwargs", {})
+        videos = [VideoIcon(**self.video_icon_kwargs) for _ in range(self.num_videos)]
+        super(VideoSeries, self).__init__(*videos, **kwargs)
+        self.arrange()
+        self.set_width(kwargs.pop("width", config.frame_width/2))
+        self.set_color_by_gradient(*self.gradient_colors)
+
+
+class Tree(SVGMobject, ABC):
+    def __init__(self, **kwargs):
+        default_kwargs = {"file_name": str(Path(__file__).parent / "svgs/tree"), "width": config.frame_width / 16}
+        default_kwargs.update(kwargs)
+        super(Tree, self).__init__(**default_kwargs)
+        self.center()
+        self.set_stroke(color=WHITE, width=kwargs.pop("stroke_width", 1))
+        self.set_fill(color=GREEN, opacity=kwargs.pop("fill_opacity", 0.5))
+        self[0].set_fill(color=BLUE, opacity=0.5)
+        self[1].set_fill(color=BLUE, opacity=0.5)
+        self[2].set_fill(color=BLUE, opacity=0.5)
+
+
+class Sigmoid(VGroup, ABC):
+    # TODO: Make more general
+    def __init__(self, **kwargs):
+        axes = Axes(
+            x_range=[-10, 10, 1],
+            y_range=[0, 1, 0.1],
+            x_length=10,
+            axis_config={"color": BLUE}
+        )
+        sigmoid_graph = axes.get_graph(lambda x: sigmoid(x), color=RED)
+        sigmoid_graph.set_stroke(width=2)
+        super(Sigmoid, self).__init__(axes, sigmoid_graph)
+
+
+class Clusters(SVGMobject, ABC):
+    def __init__(self, **kwargs):
+        default_kwargs = {"file_name": str(Path(__file__).parent / "svgs/clusters"),
+                          "width": config.frame_width / 16}
+        default_kwargs.update(kwargs)
+        super(Clusters, self).__init__(**default_kwargs)
+        self.center()
+        self.set_stroke(color=WHITE, width=kwargs.pop("stroke_width", 1))
+        self.set_fill(color=GREEN, opacity=kwargs.pop("fill_opacity", 0.5))
+        self[0:18].set_color(YELLOW)
+        self[18:29].set_color(RED)
+        self[29:].set_color(BLUE)

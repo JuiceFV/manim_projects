@@ -1,10 +1,9 @@
-from manim import *
-from typing import List
-import itertools as it
+from __future__ import annotations
 import random
+from typing import Optional
 
 from .pi_creature_animations import *
-from .utils import Singleton
+from custom.utils import Singleton
 
 
 class PiCreatureScene(Scene, metaclass=Singleton):
@@ -21,40 +20,40 @@ class PiCreatureScene(Scene, metaclass=Singleton):
         self.pi_creature = None
         super(PiCreatureScene, self).__init__()
 
-    def setup(self):
+    def setup(self) -> None:
         self.pi_creatures = VGroup(*self.create_pi_creatures())
         self.pi_creature = self.get_primary_pi_creature()
         if self.pi_creatures_start_on_screen:
             self.add(*self.pi_creatures)
 
-    def create_pi_creatures(self):
+    def create_pi_creatures(self) -> VGroup:
         """
         Likely updated for subclasses
         """
         return VGroup(self.create_pi_creature())
 
-    def create_pi_creature(self):
+    def create_pi_creature(self) -> PiCreature:
         pi_creature = PiCreature(**self.default_pi_creature_kwargs)
         pi_creature.to_corner(self.default_pi_creature_start_corner)
         return pi_creature
 
-    def get_pi_creatures(self):
+    def get_pi_creatures(self) -> VGroup:
         return self.pi_creatures
 
-    def get_primary_pi_creature(self):
+    def get_primary_pi_creature(self) -> PiCreature:
         return self.pi_creatures[0]
 
-    def any_pi_creatures_on_screen(self):
+    def any_pi_creatures_on_screen(self) -> bool:
         return len(self.get_on_screen_pi_creatures()) > 0
 
-    def get_on_screen_pi_creatures(self):
+    def get_on_screen_pi_creatures(self) -> VGroup:
         mobjects = self.get_mobject_family_members()
         return VGroup(*[
             pi for pi in self.get_pi_creatures()
             if pi in mobjects
         ])
 
-    def introduce_bubble(self, *args, **kwargs):
+    def introduce_bubble(self, *args, **kwargs) -> None:
         if isinstance(args[0], PiCreature):
             pi_creature = args[0]
             content = args[1:]
@@ -74,7 +73,7 @@ class PiCreatureScene(Scene, metaclass=Singleton):
         anims = []
         on_screen_mobjects = self.get_mobject_family_members()
 
-        def has_bubble(pi):
+        def has_bubble(pi: PiCreature) -> bool:
             return pi.bubble is not None and \
                    pi.bubble in on_screen_mobjects
 
@@ -109,63 +108,61 @@ class PiCreatureScene(Scene, metaclass=Singleton):
 
         self.play(*anims, **kwargs)
 
-    def pi_creature_says(self, *args, **kwargs):
+    def pi_creature_says(self, *args, **kwargs) -> None:
         self.introduce_bubble(
             *args,
             bubble_class=SpeechBubble,
             **kwargs
         )
 
-    def pi_creature_thinks(self, *args, **kwargs):
+    def pi_creature_thinks(self, *args, **kwargs) -> None:
         self.introduce_bubble(
             *args,
             bubble_class=ThoughtBubble,
             **kwargs
         )
 
-    def say(self, *content, **kwargs):
-        self.pi_creature_says(
-            self.get_primary_pi_creature(), *content, **kwargs)
+    def say(self, *content, **kwargs) -> None:
+        self.pi_creature_says(self.get_primary_pi_creature(), *content, **kwargs)
 
-    def think(self, *content, **kwargs):
-        self.pi_creature_thinks(
-            self.get_primary_pi_creature(), *content, **kwargs)
+    def think(self, *content, **kwargs) -> None:
+        self.pi_creature_thinks(self.get_primary_pi_creature(), *content, **kwargs)
 
-    # def compile_play_args_to_animation_list(self, *args, **kwargs):
-    #     """
-    #     Add animations so that all pi creatures look at the
-    #     first mobject being animated with each .play call
-    #     """
-    #     animations = Scene.compile_play_args_to_animation_list(self, *args, **kwargs)
-    #     anim_mobjects = Group(*[a.mobject for a in animations])
-    #     all_movers = anim_mobjects.get_family()
-    #     if not self.any_pi_creatures_on_screen():
-    #         return animations
-    #
-    #     pi_creatures = self.get_on_screen_pi_creatures()
-    #     non_pi_creature_anims = [
-    #         anim
-    #         for anim in animations
-    #         if len(set(anim.mobject.get_family()).intersection(pi_creatures)) == 0
-    #     ]
-    #     if len(non_pi_creature_anims) == 0:
-    #         return animations
-    #     # Get pi creatures to look at whatever
-    #     # is being animated
-    #     first_anim = non_pi_creature_anims[0]
-    #     main_mobject = first_anim.mobject
-    #     for pi_creature in pi_creatures:
-    #         if pi_creature not in all_movers:
-    #             animations.append(ApplyMethod(
-    #                 pi_creature.look_at,
-    #                 main_mobject,
-    #             ))
-    #     return animations
+    def compile_animations(self, *args, **kwargs):
+        """
+        Add animations so that all pi creatures look at the
+        first mobject being animated with each .play call
+        """
+        animations = Scene.compile_animations(self, *args, **kwargs)
+        anim_mobjects = Group(*[a.mobject for a in animations])
+        all_movers = anim_mobjects.get_family()
+        if not self.any_pi_creatures_on_screen():
+            return animations
 
-    def blink(self):
+        pi_creatures = self.get_on_screen_pi_creatures()
+        non_pi_creature_anims = [
+            anim
+            for anim in animations
+            if len(set(anim.mobject.get_family()).intersection(pi_creatures)) == 0
+        ]
+        if len(non_pi_creature_anims) == 0:
+            return animations
+        # Get pi creatures to look at whatever
+        # is being animated
+        first_anim = non_pi_creature_anims[0]
+        main_mobject = first_anim.mobject
+        for pi_creature in pi_creatures:
+            if pi_creature not in all_movers:
+                animations.append(ApplyMethod(
+                    pi_creature.look_at,
+                    main_mobject,
+                ))
+        return animations
+
+    def blink(self) -> None:
         self.play(Blink(random.choice(self.get_on_screen_pi_creatures())))
 
-    def joint_blink(self, pi_creatures=None, shuffle=True, **kwargs):
+    def joint_blink(self, pi_creatures: PiCreature = None, shuffle: bool = True, **kwargs) -> PiCreatureScene:
         if pi_creatures is None:
             pi_creatures = self.get_on_screen_pi_creatures()
         creatures_list = list(pi_creatures)
@@ -187,30 +184,30 @@ class PiCreatureScene(Scene, metaclass=Singleton):
         ])
         return self
 
-    def wait(self, time=1, blink=True, **kwargs):
+    def wait(self, _time: int = 1, blink: bool = True, **kwargs) -> Optional[PiCreatureScene, None]:
         if "stop_condition" in kwargs:
-            self.non_blink_wait(time, **kwargs)
+            self.non_blink_wait(_time, **kwargs)
             return
-        while time >= 1:
+        while _time >= 1:
             time_to_blink = self.total_wait_time % self.seconds_to_blink == 0
             if blink and self.any_pi_creatures_on_screen() and time_to_blink:
                 self.blink()
             else:
                 self.non_blink_wait(**kwargs)
-            time -= 1
+            _time -= 1
             self.total_wait_time += 1
-        if time > 0:
-            self.non_blink_wait(time, **kwargs)
+        if _time > 0:
+            self.non_blink_wait(_time, **kwargs)
         return self
 
-    def non_blink_wait(self, time=1, **kwargs):
-        Scene.wait(self, time, **kwargs)
+    def non_blink_wait(self, duration_time: int = 1, **kwargs) -> PiCreatureScene:
+        Scene.wait(self, duration_time, **kwargs)
         return self
 
-    def change_mode(self, mode):
-        self.play(self.get_primary_pi_creature().change_mode, mode)
+    def change_mode(self, mode: str) -> None:
+        self.play(self.get_primary_pi_creature().animate.change_mode(mode))
 
-    def look_at(self, thing_to_look_at, pi_creatures=None, added_anims=None, **kwargs):
+    def look_at(self, thing_to_look_at, pi_creatures: PiCreature = None, added_anims: list = None, **kwargs) -> None:
         if pi_creatures is None:
             pi_creatures = self.get_pi_creatures()
         anims = [

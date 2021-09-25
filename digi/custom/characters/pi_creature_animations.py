@@ -1,7 +1,7 @@
-from manim import *
-
+from __future__ import annotations
 from .pi_creature import *
 from ..drawings import SpeechBubble
+from ..utils import parent_kwargs
 
 
 class Blink(ApplyMethod):
@@ -10,39 +10,23 @@ class Blink(ApplyMethod):
 
 
 class PiCreatureBubbleIntroduction(AnimationGroup):
-    self_defaults = {
-        "target_mode": "speaking",
-        "bubble_class": SpeechBubble,
-        "change_mode_kwargs": {},
-        "bubble_creation_class": DrawBorderThenFill,
-        "bubble_creation_kwargs": {},
-        "bubble_kwargs": {},
-        "content_introduction_class": Write,
-        "content_introduction_kwargs": {},
-        "look_at_arg": None,
-    }
-    parent_defaults = {
-        'lag_ratio': 0.0,
-        'run_time': 1.0,
-        'rate_func': smooth,
-        'name': None,
-        'remover': False,
-        'suspend_mobject_updating': True,
-    }
 
     def __init__(self, pi_creature: PiCreature, *content, **kwargs) -> None:
-        for key, value in self.self_defaults.items():
-            setattr(self, key, kwargs.get(key, value))
-            if key in kwargs:
-                kwargs.pop(key)
+        """
 
-        for key, value in self.parent_defaults.items():
-            self.parent_defaults[key] = kwargs.get(key, value)
-            if key in kwargs:
-                kwargs.pop(key)
-
-        if len(kwargs) > 0:
-            raise TypeError(f"Wrong argument is passed {kwargs.keys()[0]}")
+        :param pi_creature:
+        :param content:
+        :param kwargs:
+        """
+        self.target_mode = kwargs.pop("target_mode", "speaking")
+        self.bubble_class = kwargs.pop("bubble_class", SpeechBubble)
+        self.change_mode_kwargs = kwargs.pop("change_mode_kwargs", {})
+        self.bubble_creation_class = kwargs.pop("bubble_creation_class", DrawBorderThenFill)
+        self.bubble_creation_kwargs = kwargs.pop("bubble_creation_kwargs", {})
+        self.bubble_kwargs = kwargs.pop("bubble_kwargs", {})
+        self.content_introduction_class = kwargs.pop("content_introduction_class", Write)
+        self.content_introduction_kwargs = kwargs.pop("content_introduction_kwargs", {})
+        self.look_at_arg = kwargs.pop("look_at_arg", None)
 
         bubble = pi_creature.get_bubble(
             *content,
@@ -65,7 +49,7 @@ class PiCreatureBubbleIntroduction(AnimationGroup):
         )
         AnimationGroup.__init__(
             self, change_mode, bubble_creation, content_introduction,
-            **self.parent_defaults
+            **parent_kwargs(self, **kwargs)
         )
 
 
@@ -78,19 +62,13 @@ class PiCreatureSays(PiCreatureBubbleIntroduction):
 
 
 class RemovePiCreatureBubble(AnimationGroup):
-    self_defaults = {
-        "target_mode": "plain",
-        "look_at_arg": None,
-        "remover": True,
-    }
-
     def __init__(self, pi_creature, **kwargs):
-        for key, value in self.self_defaults.items():
-            setattr(self, key, kwargs.get(key, value))
-            if key in kwargs:
-                kwargs.pop(key)
+        self.target_mode = kwargs.pop("target_mode", "plain")
+        self.look_at_arg = kwargs.pop("look_at_arg", None)
+        self.remover = kwargs.pop("remover", True)
         if len(kwargs) > 0:
-            raise TypeError(f"Wrong argument is passed {kwargs.keys()[0]}")
+            raise TypeError(f"Wrong argument is passed {list(kwargs.keys())[0]}")
+
         self.pi_creature = pi_creature
         if self.pi_creature.bubble is None:
             raise AttributeError(f"{type(pi_creature).__name__} has no bubbles")

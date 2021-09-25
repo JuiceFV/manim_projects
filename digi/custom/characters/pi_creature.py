@@ -6,7 +6,8 @@ from typing import Union
 
 import numpy as np
 from manim import *
-from ..drawings import ThoughtBubble, Bubble, SpeechBubble
+from ..drawings import ThoughtBubble, Bubble
+from ..utils import parent_kwargs
 
 PI_CREATURE_SCALE_FACTOR = 0.5
 
@@ -19,36 +20,34 @@ MOUTH_INDEX = 5
 
 
 class PiCreature(SVGMobject, ABC):
-    self_defaults = {
-        "file_name_prefix": "PiCreature",
-        "corner_scale_factor": 0.75,
-        "flip_at_start": False,
-        "is_looking_direction_purposeful": False,
-        "start_corner": None,
-        "pupil_to_eye_width_ratio": 0.4,
-        "pupil_dot_to_pupil_width_ratio": 0.3,
-    }
-    parent_defaults = {
-        "color": BLUE_E,
-        "stroke_width": 0,
-        "stroke_color": BLACK,
-        "fill_opacity": 1.0,
-        "height": 3
-    }
-
     def __init__(self, mode: str = "plain", **kwargs) -> None:
-        for key, value in self.self_defaults.items():
-            setattr(self, key, kwargs.get(key, value))
-            if key in kwargs:
-                kwargs.pop(key)
+        """
+        :param mode: pi-creature emotion
+        :param kwargs:
 
-        for key, value in self.parent_defaults.items():
-            self.parent_defaults[key] = kwargs.get(key, value)
-            if key in kwargs:
-                kwargs.pop(key)
+        PiCreature kwargs:
+           * **file_name_prefix** - the filename prefix of pi-creature (default: "<path_to_svgs>/PiCreature")
+           * **corner_scale_factor** - scale factor of a creature when it moves to a corner
+           * **flip_at_start** - flip creature at the beginning of its occurrence
+           * **is_looking_direction_purposeful** - if
+           * **start_corner** - the corner pi-creature appears at the beginning
+           * **pupil_to_eye_width_ratio** - the ratio of pupil towards eye
+           * **pupil_dot_to_pupil_width_ratio** - the ratio of pupil' dot towards pupil
 
-        if len(kwargs) > 0:
-            raise TypeError(f"Wrong argument is passed {kwargs.keys()[0]}")
+        SVGMobject kwargs:
+           * **color** - color of pi-creature body
+           * **stroke_width** - stroke width
+           * **stroke_color** - stroke color
+           * **fill_opacity** - fill opacity
+           * **height** - height of pi-creature
+        """
+        self.file_name_prefix = kwargs.pop("file_name_prefix", "PiCreature")
+        self.corner_scale_factor = kwargs.pop("corner_scale_factor", 0.75)
+        self.flip_at_start = kwargs.pop("flip_at_start", False)
+        self.is_looking_direction_purposeful = kwargs.pop("is_looking_direction_purposeful", False)
+        self.start_corner = kwargs.pop("start_corner", None)
+        self.pupil_to_eye_width_ratio = kwargs.pop("pupil_to_eye_width_ratio", 0.4)
+        self.pupil_dot_to_pupil_width_ratio = kwargs.pop("pupil_dot_to_pupil_width_ratio", 0.3)
 
         self.mouth = None
         self.body = None
@@ -58,9 +57,10 @@ class PiCreature(SVGMobject, ABC):
         self.bubble = None
         self.mode = mode
         self.parts_named = False
+
         try:
             svg_file = str(Path(__file__).parent / f"svgs/{self.file_name_prefix}_{mode}.svg")
-            super(PiCreature, self).__init__(file_name=svg_file, **self.parent_defaults)
+            super(PiCreature, self).__init__(file_name=svg_file, **parent_kwargs(self, **kwargs))
         except IOError as e:
             raise e
 
@@ -279,7 +279,7 @@ class Mortimer(PiCreature, ABC):
         "flip_at_start": True,
     }
 
-    def __init__(self, mode: str = "plain", **kwargs):
+    def __init__(self, mode: str = "plain", **kwargs) -> None:
         self.self_cfg.update(kwargs)
         super(Mortimer, self).__init__(mode=mode, **self.self_cfg)
 
@@ -289,6 +289,6 @@ class Mathematician(PiCreature, ABC):
         "color": GREY,
     }
 
-    def __init__(self, mode: str = "plain", **kwargs):
+    def __init__(self, mode: str = "plain", **kwargs) -> None:
         self.self_cfg.update(kwargs)
         super(Mathematician, self).__init__(mode=mode, **self.self_cfg)

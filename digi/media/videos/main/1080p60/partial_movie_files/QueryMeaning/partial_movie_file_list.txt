@@ -1,0 +1,10 @@
+# This file is used internally by FFMPEG.
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/450974505_2114061070_212655260.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_3316324169_2631579152.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_761795568_896676913.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_2979371448_814474303.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_2409588381_1718303884.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_3841306213_2664672488.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_137239657_29724207.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_2904902500_835689641.mp4'
+file 'file:D:/Github/manim_projects/digi/media/videos/main/1080p60/partial_movie_files/QueryMeaning/34786186_2567077582_1449539996.mp4'
