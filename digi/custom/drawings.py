@@ -57,7 +57,6 @@ class Bubble(SVGMobject, ABC):
     def pin_to(self, mobject: Mobject) -> SVGMobject:
         mob_center = mobject.get_center()
         want_to_flip = np.sign(mob_center[0]) != np.sign(self.direction[0])
-        print(want_to_flip, self.direction, mob_center)
         can_flip = not self.direction_was_specified
         if want_to_flip and can_flip:
             self.flip()
