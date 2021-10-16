@@ -2,8 +2,8 @@ from manim import *
 import itertools as it
 from typing import Tuple, List
 from custom.characters.pi_creature import PiCreature
-from custom.characters.pi_creature_scene import PiCreatureScene
-from custom.drawings import VideoSeries, Tree, Sigmoid, Clusters
+from custom.characters.pi_creature_scene import PiCreatureScene, CustomersScene
+from custom.drawings import VideoSeries, Tree, Sigmoid, Clusters, NotebookWithNotes, Lock, Cross, Check
 from custom.characters.pi_creature_animations import Blink, PiCreatureSays
 
 
@@ -337,7 +337,7 @@ class QueryMeaning(QueryResponseScene):
 
         # Counting numbers up to target
         # 1. P(iPhone) - 0.99
-        # 2. P(white) - 0.77
+        # 2. P(white) - 0.78
         # 3. P(glaze) - 0.01
         self.play(*[ChangeDecimalToValue(decimal, target)
                     for decimal, target in zip(probas_decimals, [0.99, 0.78, 0.01])])
@@ -418,5 +418,362 @@ class QueryMeaning(QueryResponseScene):
 
 
 class VipryamitelMeaning(Scene):
+    pi_customer = PiCreature(mode="angry")
+
     def construct(self):
-        pass
+        self.typo_query_probas_scene()
+
+    def typo_query_probas_scene(self):
+        query = VGroup(*[Text(word) for word in ["iPhone", ",tksq"]]).arrange(RIGHT).to_edge(UP)
+        self.play(AddTextWordByWord(query))
+        probas_query = MathTex(r"P(\text{query}) = ", r"P(\text{iPhone})", r"\times P(\text{,tksq})",
+                               r" = 0.99 \times", "?", "= 0")
+        self.play(FadeIn(probas_query[0]))
+        self.play(TransformMatchingShapes(query[0].copy(), probas_query[1]))
+        self.play(TransformMatchingShapes(query[1].copy(), probas_query[2]))
+        self.play(FadeIn(probas_query[-3:-1]))
+        self.wait()
+        self.play(Transform(probas_query[-2], MathTex("0").move_to(probas_query[-2].get_center())))
+        self.play(FadeIn(probas_query[-1]))
+        self.play(probas_query.animate.next_to(query, DOWN, buff=MED_SMALL_BUFF))
+
+        self.angry_customer_scene()
+
+        query_wrong_word = query[1]
+        probas_query_wrong_word = probas_query[2]
+        query_correct_word = Text("белый").next_to(query[0]).set_color(YELLOW)
+        probas_query_correct_word = MathTex(r"\times P(\text{белый})", tex_to_color_map={r'\text{белый}': YELLOW})
+        probas_query_correct_word.move_to(probas_query_wrong_word.get_center())
+        correct_proba = MathTex("0.78").next_to(probas_query[-3], buff=SMALL_BUFF).set_color(YELLOW)
+        new_ans = MathTex("= 0.772", tex_to_color_map={'0.772': YELLOW}).next_to(correct_proba, buff=SMALL_BUFF)
+        self.play(
+            AnimationGroup(
+                Transform(query_wrong_word, query_correct_word),
+                TransformMatchingShapes(probas_query_wrong_word, probas_query_correct_word),
+                Transform(probas_query[-2], correct_proba),
+                TransformMatchingShapes(probas_query[-1], new_ans)
+            )
+        )
+
+        happy_pi_customer = self.pi_customer.copy()
+        happy_pi_customer.change_mode("happy")
+        happy_pi_customer.body.set_color(BLUE)
+        self.play(Transform(self.pi_customer, happy_pi_customer))
+        self.wait()
+
+    def angry_customer_scene(self):
+        self.pi_customer.to_edge(DOWN).scale(0.6)
+        self.pi_customer.body.set_color(RED)
+        self.add(self.pi_customer)
+        self.play(FadeIn(self.pi_customer))
+
+
+class VimpryamitelBlackBoxScene(CustomersScene):
+    black_box = None
+    box_label = None
+    black_box_group = None
+    wrong_queries = [Text(query).set_color(RED) for query in ["айфон белый", "iphone ,tksq",
+                                                              "iphone блый", "iphoneблый"]]
+    correct_queries = [Text(correction).set_color(GREEN) for correction in ["iphone белый"] * 4]
+
+    def construct(self) -> None:
+        self.draw_blackbox()
+        self.change_all_customers_modes("raise_right_hand", lag_ratio=0)
+        self.get_wrong_queries()
+        self.pass_queries_to_spellchecker_and_fix_it()
+        self.change_all_customers_modes("plain", look_at_arg=self.black_box.get_center(), lag_ratio=0)
+        self.change_all_customers_modes("hooray", lag_ratio=0)
+        self.zoom_in_on_black_box()
+
+    def draw_blackbox(self):
+        if self.black_box is not None:
+            raise Exception("Box is already created")
+        self.black_box = Rectangle(width=config.frame_width/2, height=config.frame_height-2,
+                                   fill_opacity=1, fill_color=BLACK)
+        self.box_label = Text("Spellchecker").move_to(self.black_box.get_center())
+        self.black_box_group = VGroup(self.black_box, self.box_label)
+        self.black_box_group.to_edge(RIGHT)
+        self.add_foreground_mobject(self.black_box_group)
+        self.play(
+            AnimationGroup(
+                Create(self.black_box),
+                FadeIn(self.box_label),
+                lag_ratio=0.5
+            )
+        )
+
+    def get_wrong_queries(self):
+        customers = self.get_customers()
+        if not all(list(map(lambda c: c.mode == "raise_right_hand", customers))):
+            raise Exception("Customers have to raise hand")
+        for idx, customer in enumerate(customers):
+            self.wrong_queries[idx].scale(0.4).next_to(customer, UR)
+
+        self.play(FadeIn(*[query for query in self.wrong_queries]))
+
+    def pass_queries_to_spellchecker_and_fix_it(self):
+        anims_wrong = [query.animate.move_to(self.black_box.get_center()) for query in self.wrong_queries] + \
+                [customer.animate.look_at(self.black_box.get_center()) for customer in self.customers]
+
+        for query in self.correct_queries:
+            query.scale(0.4).move_to(self.black_box.get_center())
+        anims_correct = [q.animate.next_to(c, UR) for q, c in zip(self.correct_queries, self.get_customers())]
+
+        for wrong_animation, correct_animation in zip(anims_wrong, anims_correct):
+            self.play(wrong_animation)
+            self.play(correct_animation)
+
+    def zoom_in_on_black_box(self, radius=config.frame_width/2 + config.frame_height/2):
+        # Zoom a little bit higher than "Spellchecker" label
+        vect = -self.black_box.get_center() + [0, -1, 0]
+
+        self.play(*[
+            ApplyPointwiseFunction(lambda point: (point + vect) * radius, mob)
+            for mob in self.mobjects
+        ])
+
+
+class VipryamitelFunnel(Scene):
+    modules_names = VGroup(*[Text(label) for label in ["Query",
+                                                       "Replace similar symbols",
+                                                       "Replace brands",
+                                                       "Fix layout",
+                                                       "Handle punctuation",
+                                                       "Fix spaces",
+                                                       "Typo fixing",
+                                                       "Replace brands"]])
+    default_level_props = {'width': 4.0, 'height': 0.5}
+    levels = VGroup(*[Rectangle(width=4.0, height=0.5) for _ in range(8)]).arrange(DOWN, buff=0)
+    query_at_level = [Text(query).set(height=0.3) for query in ["Лосситан дхи ,en ghjdbyc длянего",
+                                                                "l'occitane дхи ,en ghjdbyc длянего",
+                                                                "l'occitane дхи ,en ghjdbyc длянего",
+                                                                "l'occitane дхи ,en провинс длянего",
+                                                                "l'occitane дхи, en провинс длянего",
+                                                                "l'occitane дхи, en провинс для него",
+                                                                "l'occitane духи, en прованс для него",
+                                                                "l'occitane духи, en provence для него"]]
+    rgbas = color_gradient((RED_E, GREEN_E), 8)
+    probas_at_level = {
+        'typo_probas': [p for p in np.linspace(1, 0, 8)],
+        'resp_probas': [p for p in np.linspace(0, 1, 8)]
+    }
+    probas_label = [MathTex(r"P(\text{ошибки в запросе}) = ", color=RED),
+                    MathTex(r"P(\text{что-то найти по запросу}) = ", color=RED)]
+    probas = None
+    text_height = 0.3
+
+    def construct(self):
+        self.show_levels_scene()
+        self.query_probas_scene()
+        self.show_kostyl()
+
+    def _get_level_rect(self, level: int):
+        if level == 0:
+            return self.levels[0]
+        elif self.levels[level].width < self.levels[level - 1].width:
+            return self.levels[level]
+        else:
+            return self.levels[level].stretch_to_fit_width(width=self.levels[level-1].width*(1 - level/10))
+
+    def show_levels_scene(self):
+        for idx in range(len(self.levels)):
+            level = self._get_level_rect(idx)
+            level.set_color(self.rgbas[idx]).set_fill(color=self.rgbas[idx], opacity=1)
+            self.modules_names[idx].set(height=self.text_height).next_to(level, LEFT).to_edge(LEFT)
+            self.modules_names[idx].set_color(self.rgbas[idx])
+            self.play(FadeIn(level, self.modules_names[idx]))
+
+    def query_probas_scene(self):
+        if self.probas is not None:
+            raise ValueError("self.probas already created")
+        res_probas = []
+        probas_nums = [self.probas_at_level[p_type][0] for p_type in self.probas_at_level]
+        for num, label in zip(probas_nums, self.probas_label):
+            decimal_num = DecimalNumber(num, num_decimal_places=2)
+            res_probas.append(VGroup(label, decimal_num).arrange(RIGHT).set(height=self.text_height))
+        self.probas = VGroup(*res_probas).set_color(RED).arrange(RIGHT, buff=LARGE_BUFF).to_edge(UP)
+
+        for idx, query in enumerate(self.query_at_level):
+            query.next_to(self.levels[idx], RIGHT).to_edge(RIGHT/5)
+            query.set_color(self.rgbas[idx])
+        self.query_at_level[0].set_color(RED)
+        self.play(FadeIn(self.query_at_level[0], self.probas))
+        self.wait()
+
+        self.play(Circumscribe(self.probas[0], fade_out=True))
+        self.play(Circumscribe(self.probas[1], fade_out=True))
+        self.wait()
+        curr_query = self.query_at_level[0]
+        typo_proba_box = SurroundingRectangle(self.probas[0][-1], buff=SMALL_BUFF)
+        resp_proba_box = SurroundingRectangle(self.probas[1][-1], buff=SMALL_BUFF)
+        self.play(
+            AnimationGroup(
+                Create(typo_proba_box),
+                Create(resp_proba_box)
+            )
+        )
+        for query, typo_proba, resp_proba, p_color in zip(self.query_at_level[1:],
+                                                          self.probas_at_level['typo_probas'][1:],
+                                                          self.probas_at_level['resp_probas'][1:],
+                                                          self.rgbas[1:]):
+            self.probas.set_color(p_color)
+            self.play(
+                AnimationGroup(
+                    ReplacementTransform(curr_query, query),
+                    ChangeDecimalToValue(self.probas[0][-1], typo_proba),
+                    ChangeDecimalToValue(self.probas[1][-1], resp_proba),
+                )
+            )
+            curr_query = query
+            self.wait()
+        self.play(FadeOut(typo_proba_box, resp_proba_box, self.probas, self.query_at_level[-1]))
+
+    def show_kostyl(self):
+        spread_levels = self.levels.copy()
+        spread_levels.arrange(DOWN, buff=MED_SMALL_BUFF)
+        kostyl = []
+        for level in spread_levels[:-1]:
+            kostyl.append(Line(color=YELLOW).next_to(level, DOWN, buff=MED_SMALL_BUFF/2))
+            kostyl[-1].set(width=level.width)
+        kostyl = VGroup(*kostyl)
+
+        spread_names_anims = []
+        for idx, name in enumerate(self.modules_names):
+            spread_names_anims.append(name.animate.next_to(spread_levels[idx], LEFT).to_edge(LEFT))
+
+        self.play(
+            AnimationGroup(
+                Transform(self.levels, spread_levels),
+                *spread_names_anims
+            )
+        )
+        self.play(FadeIn(kostyl))
+
+        self.play(*list(map(lambda instance: Wiggle(instance), kostyl)))
+        kostyl_label = Text("Kostyl", color=YELLOW).to_edge(UP/2)
+        self.play(ReplacementTransform(kostyl, kostyl_label))
+        self.play(FadeOut(*[obj for obj in self.mobjects if obj != kostyl_label]))
+        self.wait()
+
+
+class KostylScene(Scene):
+    def __init__(self):
+        super(KostylScene, self).__init__()
+        self.kostyl_label = Text("Kostyl", color=YELLOW).to_edge(UP / 2)
+
+    def construct(self):
+        self.add(self.kostyl_label)
+        self.example()
+        self.black_white_lists()
+        # white_list = NotebookWithNotes(color=GREEN)
+        # black_list = NotebookWithNotes(color=RED)
+        # feed = NotebookWithNotes(color=BLUE)
+        # kostyl_rools = VGroup(white_list, black_list, feed).arrange(RIGHT, buff=4)
+        # self.play(
+        #     AnimationGroup(
+        #         *[Create(rool) for rool in kostyl_rools]
+        #     )
+        # )
+
+    def example(self):
+        query = Text("Chanel ультра ле теинт тональный флюид")
+        first_subquery = query[:6]
+        second_subquery = query[6:19]
+        third_subquery = query[19:]
+        first_box = SurroundingRectangle(first_subquery, color=WHITE)
+        second_box = SurroundingRectangle(third_subquery, color=WHITE)
+        first_lock = Lock().next_to(first_box, UP).scale(0.6)
+        second_lock = Lock().next_to(second_box, UP).scale(0.6)
+
+        self.play(Write(query))
+        self.play(Create(first_box))
+        self.play(FadeIn(first_lock))
+        self.play(Create(second_box))
+        self.play(FadeIn(second_lock))
+        self.play(*list(map(lambda subquery: subquery.animate.set_color(GREEN), [first_subquery, third_subquery])))
+        self.play(ApplyWave(query))
+        self.play(Indicate(second_subquery, color=RED))
+        self.wait()
+        self.play(FadeOut(*[mobject for mobject in self.mobjects if mobject != self.kostyl_label]))
+
+    def black_white_lists(self):
+        base_query = Text("парфюм essencial набор").scale(0.5).to_edge(LEFT + UP*2.8)
+        words = VGroup(*[base_query[:6], base_query[6:15], base_query[15:]])
+        self.play(Write(base_query))
+        every_word_boxes = [SurroundingRectangle(word) for word in words]
+        boxes_by_two_words = [SurroundingRectangle(words[:2]), SurroundingRectangle(words[1:])]
+        entire_query_box = SurroundingRectangle(base_query)
+        table = MobjectTable(
+            [[words[0].copy(),   Cross(), Check(), Text("ESSENTIAL PARFUMS PARIS"), Lock()],
+             [words[:2].copy(),  Cross(), Cross(), Text("ESSENTIAL PARFUMS PARIS"), Lock()],
+             [base_query.copy(), Cross(), Cross(), Text("ESSENTIAL PARFUMS PARIS"), Lock()],
+             [words[1].copy(),   Check(), Cross(), Text("ESSENTIAL PARFUMS PARIS"), Lock()],
+             [words[1:].copy(),  Cross(), Cross(), Text("ESSENTIAL PARFUMS PARIS"), Lock()],
+             [words[2].copy(),   Cross(), Cross(), Text("ESSENTIAL PARFUMS PARIS"), Lock()]],
+            row_labels=[],
+            col_labels=[NotebookWithNotes(color=GREEN), NotebookWithNotes(color=RED), Text("Трансформация"), Lock()],
+            include_outer_lines=True
+        )
+        for idx, entry in enumerate(table.get_entries_without_labels()):
+            if idx % 5 == 0:
+                entry.scale(1.3)
+            self.remove(entry)
+        table.scale(0.4).next_to(base_query, DOWN).to_edge(LEFT)
+        self.play(Create(table.get_vertical_lines()))
+        self.play(Create(table.get_horizontal_lines()))
+        self.play(Create(table.get_col_labels(), run_time=2))
+        self.wait()
+        boxes_anims = [
+            Create(every_word_boxes[0]),
+            ReplacementTransform(every_word_boxes[0], boxes_by_two_words[0]),
+            ReplacementTransform(boxes_by_two_words[0], entire_query_box),
+            ReplacementTransform(entire_query_box, every_word_boxes[1]),
+            ReplacementTransform(every_word_boxes[1], boxes_by_two_words[1]),
+            ReplacementTransform(boxes_by_two_words[1], every_word_boxes[2])
+        ]
+        blocked_indices = []
+        for idx in range(len(table.get_entries_without_labels())):
+            if (idx % 5 == 3 and idx != 18) or (idx % 5 == 4 and idx != 4 and idx != 19):
+                blocked_indices.append(idx)
+
+        for idx, entry in enumerate(table.get_entries_without_labels()):
+            if idx not in blocked_indices:
+                if idx % 5 == 0:
+                    self.play(
+                        AnimationGroup(
+                            boxes_anims[idx // 5],
+                            FadeIn(entry),
+                            lag_ratio=0.5
+                        )
+                    )
+                else:
+                    self.play(FadeIn(entry))
+
+                if idx % 5 == 4:
+                    self.wait()
+
+        self.wait()
+
+        self.play(Uncreate(every_word_boxes[2]))
+
+        result_query = Text("парфюм ESSENTIAL PARFUMS PARIS набор").set(height=base_query.height)
+        result_query.next_to(base_query, RIGHT*5)
+        blocked_part = result_query[:27]
+        changable_part = result_query[27:]
+        block_box = SurroundingRectangle(blocked_part, color=WHITE, buff=SMALL_BUFF)
+        lock = table.get_entries((1, 5))
+        arrow = Arrow(start=base_query, end=result_query, color=WHITE)
+        self.play(TransformFromCopy(base_query.copy(), result_query))
+        self.play(FadeIn(arrow))
+        self.play(Create(block_box))
+        self.play(lock.copy().animate.next_to(block_box, UP))
+        self.play(
+            AnimationGroup(
+                blocked_part.animate.set_color(GREEN),
+                changable_part.animate.set_color(RED)
+            )
+        )
+        self.wait()
+
+
+

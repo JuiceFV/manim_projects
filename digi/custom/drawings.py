@@ -192,3 +192,41 @@ class Clusters(SVGMobject, ABC):
         self[0:18].set_color(YELLOW)
         self[18:29].set_color(RED)
         self[29:].set_color(BLUE)
+
+
+class NotebookWithNotes(SVGMobject, ABC):
+    def __init__(self, **kwargs):
+        default_kwargs = {"file_name": str(Path(__file__).parent / "svgs/notebook_with_jots"),
+                          "width": config.frame_width / 16}
+        default_kwargs.update(kwargs)
+        super(NotebookWithNotes, self).__init__(**default_kwargs)
+        _color = kwargs.get("color", WHITE)
+        for mobject in self:
+            mobject.set_color(_color)
+
+
+class Lock(SVGMobject, ABC):
+    def __init__(self, **kwargs):
+        default_kwargs = {"file_name": str(Path(__file__).parent / "svgs/lock"),
+                          "width": config.frame_width / 16}
+        default_kwargs.update(kwargs)
+        super(Lock, self).__init__(**default_kwargs)
+        self[0].set_color(kwargs.get("color", WHITE))
+
+
+class Cross(SVGMobject, ABC):
+    def __init__(self, **kwargs):
+        default_kwargs = {"file_name": str(Path(__file__).parent / "svgs/cross"),
+                          "width": config.frame_width / 16}
+        default_kwargs.update(kwargs)
+        super(Cross, self).__init__(**default_kwargs)
+        self[0].set_color(kwargs.get("color", RED))
+
+
+class Check(SVGMobject, ABC):
+    def __init__(self, **kwargs):
+        default_kwargs = {"file_name": str(Path(__file__).parent / "svgs/check"),
+                          "width": config.frame_width / 16}
+        default_kwargs.update(kwargs)
+        super(Check, self).__init__(**default_kwargs)
+        self[0].set_color(kwargs.get("color", GREEN))

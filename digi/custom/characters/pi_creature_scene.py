@@ -2,22 +2,24 @@ from __future__ import annotations
 import random
 from typing import Optional
 
+import numpy as np
+
 from .pi_creature_animations import *
 from custom.utils import Singleton
 
 
 class PiCreatureScene(Scene, metaclass=Singleton):
-    def __init__(self) -> None:
-        self.total_wait_time = 0
-        self.seconds_to_blink = 3
-        self.pi_creatures_start_on_screen = True
+    def __init__(self, **kwargs) -> None:
+        self.total_wait_time = kwargs.get("total_wait_time", 0)
+        self.seconds_to_blink = kwargs.get("seconds_to_blink", 3)
+        self.pi_creatures_start_on_screen = kwargs.get("pi_creatures_start_on_screen", True)
         self.default_pi_creature_kwargs = {
             "color": BLUE,
             "flip_at_start": False,
         }
-        self.default_pi_creature_start_corner = DL
-        self.pi_creatures = None
-        self.pi_creature = None
+        self.default_pi_creature_start_corner = kwargs.get("default_pi_creature_start_corner", DL)
+        self.pi_creatures = None  # type: VGroup[PiCreature]
+        self.pi_creature = None  # type: PiCreature
         super(PiCreatureScene, self).__init__()
 
     def setup(self) -> None:
@@ -347,3 +349,70 @@ class TeacherStudentsScene(PiCreatureScene):
             ApplyPointwiseFunction(func, mob)
             for mob in self.mobjects
         ])
+
+
+class CustomersScene(PiCreatureScene):
+    def __init__(self, **kwargs):
+        self.customers_colors = [BLUE_D, BLUE_E, BLUE_C, BLUE_B]
+        self.background_color = BLACK
+        self.customers_scale_factor = 0.3
+        self.seconds_to_blink = 2
+        self.screen_height = 3
+        self.background = None
+        self.screen = None
+        self.customers = None
+        super(CustomersScene, self).__init__(**kwargs)
+
+    def setup(self):
+        self.background = FullScreenFadeRectangle(
+            fill_color=self.background_color,
+            fill_opacity=1,
+        )
+        self.add(self.background)
+        PiCreatureScene.setup(self)
+        self.screen = ScreenRectangle(height=self.screen_height)
+        self.screen.to_corner(UP + LEFT)
+
+    def create_pi_creatures(self):
+        self.customers = VGroup(*[
+            Randolph(color=c)
+            for c in self.customers_colors
+        ])
+        self.customers.arrange(DOWN, buff=LARGE_BUFF*1.5)
+        self.customers.scale(self.customers_scale_factor)
+        self.customers.to_edge(LEFT)
+        for customer in self.customers:
+            customer.look_at([0, 0, 0])
+
+        return list(self.customers)
+
+    def get_customers(self):
+        return self.customers
+
+    def change_all_customers_modes(self, mode, **kwargs):
+        self.change_student_modes(*[mode] * len(self.customers), **kwargs)
+
+    def change_student_modes(self, *modes, **kwargs):
+        added_anims = kwargs.pop("added_anims", [])
+        self.play(
+            self.get_customers_changes(*modes, **kwargs),
+            *added_anims
+        )
+
+    def get_customers_changes(self, *modes, **kwargs):
+        pairs = list(zip(self.get_customers(), modes))
+        pairs = [(s, m) for s, m in pairs if m is not None]
+        start = VGroup(*[s for s, m in pairs])
+        target = VGroup(*[c.copy().change_mode(m) for c, m in pairs])
+        if "look_at_arg" in kwargs:
+            for pi in target:
+                pi.look_at(kwargs["look_at_arg"])
+        anims = [
+            Transform(s, t)
+            for s, t in zip(start, target)
+        ]
+        return LaggedStart(
+            *anims,
+            lag_ratio=kwargs.get("lag_ratio", 0.5),
+            run_time=1,
+        )
