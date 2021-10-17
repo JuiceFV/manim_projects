@@ -1,6 +1,6 @@
 from manim import *
 import itertools as it
-from typing import Tuple, List
+from typing import Tuple, List, Union
 from custom.characters.pi_creature import PiCreature
 from custom.characters.pi_creature_scene import PiCreatureScene, CustomersScene
 from custom.drawings import VideoSeries, Tree, Sigmoid, Clusters, NotebookWithNotes, Lock, Cross, Check
@@ -656,24 +656,21 @@ class VipryamitelFunnel(Scene):
         self.wait()
 
 
-class KostylScene(Scene):
+class KostylScene(MovingCameraScene):
     def __init__(self):
         super(KostylScene, self).__init__()
         self.kostyl_label = Text("Kostyl", color=YELLOW).to_edge(UP / 2)
+        self.modules_names = VipryamitelFunnel.modules_names
+        self.default_level_props = VipryamitelFunnel.default_level_props
+        self.levels = VipryamitelFunnel.levels.arrange(DOWN, buff=MED_SMALL_BUFF)
+        self.rgbas = VipryamitelFunnel.rgbas
 
     def construct(self):
         self.add(self.kostyl_label)
         self.example()
         self.black_white_lists()
-        # white_list = NotebookWithNotes(color=GREEN)
-        # black_list = NotebookWithNotes(color=RED)
-        # feed = NotebookWithNotes(color=BLUE)
-        # kostyl_rools = VGroup(white_list, black_list, feed).arrange(RIGHT, buff=4)
-        # self.play(
-        #     AnimationGroup(
-        #         *[Create(rool) for rool in kostyl_rools]
-        #     )
-        # )
+        self.bigrams()
+        self.kostyl_summarization()
 
     def example(self):
         query = Text("Chanel ультра ле теинт тональный флюид")
@@ -721,7 +718,7 @@ class KostylScene(Scene):
         table.scale(0.4).next_to(base_query, DOWN).to_edge(LEFT)
         self.play(Create(table.get_vertical_lines()))
         self.play(Create(table.get_horizontal_lines()))
-        self.play(Create(table.get_col_labels(), run_time=2))
+        self.play(FadeIn(table.get_col_labels(), run_time=2))
         self.wait()
         boxes_anims = [
             Create(every_word_boxes[0]),
@@ -754,7 +751,7 @@ class KostylScene(Scene):
 
         self.wait()
 
-        self.play(Uncreate(every_word_boxes[2]))
+        self.play(Uncreate(every_word_boxes[-1]))
 
         result_query = Text("парфюм ESSENTIAL PARFUMS PARIS набор").set(height=base_query.height)
         result_query.next_to(base_query, RIGHT*5)
@@ -774,6 +771,191 @@ class KostylScene(Scene):
             )
         )
         self.wait()
+        fs_blinder = FullScreenRectangle(color=BLACK, fill_opacity=0.85)
+        highlighted_row = [table.get_entries_without_labels((2, idx)) for idx in range(2, 4)]
+        checks = [Check().set(height=cross.height).move_to(cross) for cross in highlighted_row]
+        cells = [table.get_cell((3, 2)), table.get_cell((3, 3))]
+        corners = {
+            'UL': cells[0].get_boundary_point(UL),
+            'DR': cells[1].get_boundary_point(DR),
+            'UR': cells[1].get_boundary_point(UR),
+            'DL': cells[0].get_boundary_point(DL)
+        }
+        lines = [Line(corners['UL'], corners['DR'], color=RED), Line(corners['UR'], corners['DL'], color=RED)]
+        self.add_foreground_mobjects(*highlighted_row)
+        self.play(FadeIn(fs_blinder))
+        self.play(
+            AnimationGroup(
+                ReplacementTransform(highlighted_row[0], checks[0]),
+                ReplacementTransform(highlighted_row[1], checks[1])
+            )
+        )
+        self.wait()
+        self.play(
+            AnimationGroup(
+                Create(lines[0]),
+                Create(lines[1]),
+                lag_ratio=0.8
+            )
+        )
+        self.wait()
+        pi_creature = PiCreature("plain", flip_at_start=True).scale(0.7).to_corner(DR)
+        self.play(
+            PiCreatureSays(pi_creature, Text("Такого не может быть!", color=RED).scale(0.7), target_mode="speaking")
+        )
+        self.wait()
+        self.play(FadeOut(*[pi_creature.bubble, pi_creature.bubble.content, *lines]))
+        replacement_cross = Cross().set(height=checks[1].height).move_to(checks[1])
+        self.play(ReplacementTransform(checks[1], replacement_cross))
+        self.play(pi_creature.animate.change_mode("hooray"))
+        self.wait()
+        self.play(FadeOut(*[mobject for mobject in self.mobjects if mobject != self.kostyl_label]))
+        self.wait()
+
+    def bigrams(self):
+        base_query = Text("крем для лица ла мер").scale(0.5).to_edge(LEFT + UP*2.8)
+        words = VGroup(*[base_query[:4], base_query[4:7], base_query[7:11], base_query[11:13], base_query[13:]])
+        boxes = [SurroundingRectangle(words[idx: idx + 2]) for idx in range(len(words) - 1)]
+        self.play(AddTextLetterByLetter(base_query))
+        table = MobjectTable(
+            [[words[0:2].copy(), Check(), Lock()],
+             [words[1:3].copy(), Check(), Lock()],
+             [words[2:4].copy(), Cross(), Lock()],
+             [words[3:].copy(),  Cross(), Lock()]],
+            row_labels=[],
+            col_labels=[NotebookWithNotes(color=BLUE), Lock()],
+            include_outer_lines=True
+        )
+        table.scale(0.4).next_to(base_query, DOWN).to_edge(LEFT)
+
+        for idx, entry in enumerate(table.get_entries_without_labels()):
+            if idx % 3 == 0:
+                entry.scale(1.3)
+            self.remove(entry)
+        self.play(Create(table.get_vertical_lines()))
+        self.play(Create(table.get_horizontal_lines()))
+        self.play(FadeIn(table.get_col_labels(), run_time=2))
+        self.wait()
+        boxes_anims = [
+            Create(boxes[0]),
+            *[ReplacementTransform(boxes[idx-1], boxes[idx]) for idx in range(1, len(boxes))]
+        ]
+
+        blocked_indices = [8, 11]
+
+        for idx, entry in enumerate(table.get_entries_without_labels()):
+            if idx not in blocked_indices:
+                if idx % 3 == 0:
+                    self.play(
+                        AnimationGroup(
+                            boxes_anims[idx // 3],
+                            FadeIn(entry),
+                            lag_ratio=0.5
+                        )
+                    )
+                else:
+                    self.play(FadeIn(entry))
+
+                if idx % 3 == 2:
+                    self.wait()
+
+        self.wait()
+
+        self.play(Uncreate(boxes[-1]))
+        self.wait()
+
+        block_box = SurroundingRectangle(words[0:3], color=WHITE, buff=SMALL_BUFF)
+        lock = table.get_entries((1, 3))
+        blocked_part = words[0:3]
+        changable_part = words[3:]
+
+        self.play(Create(block_box))
+        self.play(lock.copy().animate.next_to(block_box, UP))
+        self.play(
+            AnimationGroup(
+                blocked_part.animate.set_color(GREEN),
+                changable_part.animate.set_color(RED)
+            )
+        )
+        self.wait()
+        self.play(FadeOut(*[mobject for mobject in self.mobjects if mobject != self.kostyl_label]))
+        self.wait()
+
+    def _prepare_levels(self):
+        for idx in range(len(self.levels)):
+            level = VipryamitelFunnel._get_level_rect(self, idx)
+            level.set_color(self.rgbas[idx]).set_fill(color=self.rgbas[idx], opacity=1)
+            self.modules_names[idx].set(height=0.3).next_to(level, LEFT).to_edge(LEFT)
+            self.modules_names[idx].set_color(self.rgbas[idx])
+
+    def kostyl_summarization(self):
+        def resize_mobject(mobject: Union[VMobject, Mobject], zoom_factor: int = 10) -> Union[VMobject, Mobject]:
+            if isinstance(mobject, VMobject):
+                for obj in mobject:
+                    obj.set(width=obj.width / zoom_factor)
+                    obj.move_to(obj.get_center() / zoom_factor)
+                    if obj.stroke_width:
+                        obj.set_stroke(width=mobject.stroke_width / zoom_factor)
+            else:
+                mobject.set(width=mobject.width/zoom_factor)
+                mobject.move_to(mobject.get_center()/zoom_factor)
+                if mobject.stroke_width != 0:
+                    mobject.set_stroke(width=mobject.stroke_width/zoom_factor)
+            return mobject
+
+        zf = 60
+
+        kostyl_equation = VGroup(
+            Text("Kostyl", color=YELLOW), MathTex("="), NotebookWithNotes(color=GREEN),
+            MathTex("+"), NotebookWithNotes(color=RED), MathTex("+"),
+            NotebookWithNotes(color=BLUE)
+        ).arrange(RIGHT)
+        box = SurroundingRectangle(kostyl_equation)
+        self._prepare_levels()
+        kostyl_as_lines = []
+        for level in self.levels[:-1]:
+            kostyl_as_lines.append(Line(color=YELLOW).next_to(level, DOWN, buff=MED_SMALL_BUFF / 2))
+            kostyl_as_lines[-1].set(width=level.width)
+        kostyl_as_lines = VGroup(*kostyl_as_lines)
+        self.add_foreground_mobject(self.levels)
+        self.add(self.modules_names, *kostyl_as_lines[:3], *kostyl_as_lines[4:])
+        self.camera.frame.save_state()
+
+        self.kostyl_label = resize_mobject(self.kostyl_label, zf)
+        kostyl_equation = resize_mobject(kostyl_equation, zf)
+        box = resize_mobject(box, zf)
+
+        self.camera.frame.set(width=config.frame_width/zf)
+        self.play(ReplacementTransform(self.kostyl_label, kostyl_equation[0]))
+        self.play(FadeIn(kostyl_equation[1:], run_time=3))
+        self.wait()
+        self.play(Create(box))
+        self.play(box.animate.set_fill(color=box.color, opacity=1))
+        self.remove(*kostyl_equation)
+        self.play(Restore(self.camera.frame), ReplacementTransform(box, kostyl_as_lines[3]))
+        self.wait()
+
+        return_levels = self.levels.copy().arrange(DOWN, buff=0)
+        return_names_anims = []
+        for idx, name in enumerate(self.modules_names):
+            return_names_anims.append(name.animate.next_to(return_levels[idx], LEFT).to_edge(LEFT))
+
+        kostyl_lines_anims = []
+        for idx, line in enumerate(kostyl_as_lines):
+            kostyl_lines_anims.append(line.animate.move_to(return_levels[idx].get_bottom()))
+
+        self.play(
+            AnimationGroup(
+                Transform(self.levels, return_levels),
+                *return_names_anims,
+                *kostyl_lines_anims,
+                run_time=1
+            )
+        )
+
+        self.wait()
+
+
 
 
 
