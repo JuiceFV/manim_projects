@@ -390,9 +390,9 @@ class CustomersScene(PiCreatureScene):
         return self.customers
 
     def change_all_customers_modes(self, mode, **kwargs):
-        self.change_student_modes(*[mode] * len(self.customers), **kwargs)
+        self.change_customer_modes(*[mode] * len(self.customers), **kwargs)
 
-    def change_student_modes(self, *modes, **kwargs):
+    def change_customer_modes(self, *modes, **kwargs):
         added_anims = kwargs.pop("added_anims", [])
         self.play(
             self.get_customers_changes(*modes, **kwargs),

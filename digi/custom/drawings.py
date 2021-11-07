@@ -1,8 +1,10 @@
 from abc import ABC
 
+import numpy as np
 from manim import *
 from pathlib import Path
 from .utils import parent_kwargs
+from typing import Union, Optional, Callable
 
 
 class Bubble(SVGMobject, ABC):
@@ -230,3 +232,51 @@ class Check(SVGMobject, ABC):
         default_kwargs.update(kwargs)
         super(Check, self).__init__(**default_kwargs)
         self[0].set_color(kwargs.get("color", GREEN))
+
+
+class SearchBar(VGroup, ABC):
+    def __init__(self, search_term: Union[str, Text], sb_color: color.Color = GREY, arrangement: np.ndarray = RIGHT,
+                 corner_radius: float = 0.5, fill_icon: bool = False,
+                 icon_stroke_width: int = DEFAULT_STROKE_WIDTH, **st_kw):
+
+        search_term = Text(search_term, **st_kw) if isinstance(search_term, str) else search_term
+        search_icon = SVGMobject(file_name=str(Path(__file__).parent / "svgs/search"))
+
+        sb_height = search_term.height
+        sb_color = sb_color
+        arrangement = arrangement
+        corner_radius = corner_radius
+
+        search_icon.set(height=sb_height)
+        if fill_icon:
+            search_icon.set_color(color=sb_color)
+        else:
+            search_icon.set_stroke(color=sb_color, width=icon_stroke_width)
+
+        _in_search_bar = VGroup(search_term, search_icon).arrange(arrangement)
+
+        search_box = SurroundingRectangle(_in_search_bar, buff=MED_LARGE_BUFF, corner_radius=corner_radius)
+        search_box.set_color(sb_color)
+
+        super(SearchBar, self).__init__(search_box, *_in_search_bar)
+
+    @property
+    def search_box(self) -> SurroundingRectangle:
+        return self[0]
+
+    @property
+    def search_icon(self) -> SVGMobject:
+        return self[2]
+
+    @property
+    def search_term(self) -> Text:
+        return self[1]
+
+    def type_search_term(self, **kwargs) -> Animation:
+        return AddTextLetterByLetter(self.search_term, **kwargs)
+
+    def appear_search_box(self) -> Animation:
+        return FadeIn(self.search_box, self.search_icon)
+
+    def vanish_search_box(self) -> Animation:
+        return FadeOut(self.search_box, self.search_icon)
