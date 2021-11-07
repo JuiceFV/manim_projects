@@ -2092,40 +2092,43 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
             r"\text{да }",
             r"\times \text{ на 38 \%}",
             r"+\text{ в }",
-            r"{\ ",
+            r"{",
+            r"\phantom{12345}",
             r"\over",
-            r"\ }",
+            r"\phantom{12345}",
+            r"}",
             r"\text{ раз }",
             r"\times \text{на 12 \%}",
             r"+\text{ в }",
             r"{",
+            r"\phantom{123}",
             r"\over",
+            r"\phantom{123}",
             r"}",
             r"\text{ раз }",
             r"\times \text{на 10 \%}"
         ).scale(0.5).next_to(self.module_label, DOWN)
-        
         numerators = [
-            VGroup(linoleum_sol[4], braces_and_height[3][1].copy().next_to(linoleum_sol[4], RIGHT, buff=0)),
-            VGroup(linoleum_sol[10], braces_and_height[1][1].copy().next_to(linoleum_sol[10], RIGHT, buff=0))
+            braces_and_height[3][1].copy().next_to(linoleum_sol[6], UP, buff=0.1),
+            braces_and_height[1][1].copy().next_to(linoleum_sol[14], UP, buff=0.1)
         ]
         denominators = [
-            VGroup(linoleum_sol[6], braces_and_height[2][1].copy().next_to(linoleum_sol[6], LEFT)),
-            VGroup(linoleum_sol[12], braces_and_height[0][1].copy().next_to(linoleum_sol[12], LEFT))
+            braces_and_height[2][1].copy().next_to(linoleum_sol[6], DOWN, buff=0.1),
+            braces_and_height[0][1].copy().next_to(linoleum_sol[14], DOWN, buff=0.1)
         ]
-        overs = [linoleum_sol[5], linoleum_sol[11]]
-        confidences = [linoleum_sol[2], linoleum_sol[8], linoleum_sol[14]]
-        times_word = [linoleum_sol[7], linoleum_sol[13]]
-        in_word = [linoleum_sol[3], linoleum_sol[9]]
+        overs = [linoleum_sol[6], linoleum_sol[14]]
+        confidences = [linoleum_sol[2], linoleum_sol[10], linoleum_sol[18]]
+        times_word = [linoleum_sol[9], linoleum_sol[17]]
+        in_word = [linoleum_sol[3], linoleum_sol[11]]
 
         questions = [Text(q).scale(0.3).next_to(self.pi_creature.bubble, UP) for q in [
-                            "Существует ли ориг. слово?",
-                            "На сколько мы в этом уверены?",
-                            "Во сколько раз транслитирации больше, чем ориг. слова в вертикали?",
-                            "На сколько мы уверены, что больше?",
-                            "Во сколько раз транслитирации больше, чем ориг. слова в фиде?",
-                            "На сколько мы уверены, что больше?"
-                        ]
+            "Существует ли ориг. слово?",
+            "На сколько мы в этом уверены?",
+            "Во сколько раз транслитирации больше, чем ориг. слова в вертикали?",
+            "На сколько мы уверены, что больше?",
+            "Во сколько раз транслитирации больше, чем ориг. слова в фиде?",
+            "На сколько мы уверены, что больше?"
+        ]
                      ]
 
         self.play(
