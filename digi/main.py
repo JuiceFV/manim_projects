@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional
+from typing import Optional, Sequence
 from manim import *
 from typing import Tuple, List, Union
 from custom.characters.pi_creature import PiCreature
@@ -1613,6 +1613,8 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
                 width=vertical_brands_notebook.width * 0.9
             ).next_to(vertical_brands_notebook, UP)
         )
+
+        self.questions = VGroup()
         self.setup()
 
     def construct(self):
@@ -1621,10 +1623,16 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
         self.play(self.funnel.query.animate.next_to(self.funnel.levels[2], RIGHT).set_color(self.funnel.rgbas[2]))
         self.wait()
         self.level_repr()
-        # self.colombo_new_example()
-        # self.accumulate_brand_dict()
-        # self.colombo_new_decomposition()
+        self.colombo_new_example()
+        self.wait()
+        self.accumulate_brand_dict()
+        self.wait()
+        self.colombo_new_decomposition()
+        self.wait()
         self.linoleum_decomposition()
+        self.wait()
+        self.decision_formalization()
+        self.wait()
 
     def level_repr(self):
         """Showing the level at which we now.
@@ -1731,7 +1739,7 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
                 self.play(FadeIn(brand_list))
             else:  # Pizdec concheno=)))
                 # For the rest of lists the current one appears and the previous one moving to its position
-                # Due to one of the list is already at its position we start from the second one, but
+                # Due to one of the lists is already at its position we start from the second one, but
                 # its index is 0)))
                 self.play(vertical_brand_lists[idx].animate.move_to(pos), FadeIn(brand_list))
         self.play(vertical_brand_lists[-1].animate.move_to(vertical_brand_lists[0].get_center() + np.random.random(3)))
@@ -2075,10 +2083,10 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
         scales = VGroup(scales_line, indicator)
         self.think(scales)
 
-        def decision(const, vo, vt, fo, ft):
+        def decision(const, vo, vt, fo, ft, b):
             """Decision equation.
             """
-            return const * -0.388 + 0.122 * (vt) / (vo + 1) + (ft) / (fo + 1) * 0.103 - 0.123
+            return const * -0.388 + 0.122 * (vt) / (vo + 1) + (ft) / (fo + 1) * 0.103 - b
 
         def get_indicator_pos(number: float, _indicator: Mobject, number_line: NumberLine):
             """The scales' indicator position depends on value given by scales.
@@ -2087,9 +2095,10 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
             pos[0] = number_line.number_to_point(number)[0]
             return pos
 
+        # The equation of "linoleum" to "линолеум".
         linoleum_sol = MathTex(
-            r"\text{Решение}=\ ",
-            r"\text{да }",
+            r"\text{Решение}=",
+            r"\text{ да }",
             r"\times \text{ на 38 \%}",
             r"+\text{ в }",
             r"{",
@@ -2101,35 +2110,41 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
             r"\times \text{на 12 \%}",
             r"+\text{ в }",
             r"{",
-            r"\phantom{123}",
+            r"\phantom{12345}",
             r"\over",
-            r"\phantom{123}",
+            r"\phantom{12345}",
             r"}",
             r"\text{ раз }",
-            r"\times \text{на 10 \%}"
-        ).scale(0.5).next_to(self.module_label, DOWN)
+            r"\times \text{на 10 \%}",
+            r"+ \text{предвзяты на 12\%}"
+        ).scale(0.4).next_to(self.module_label, DOWN)
+
+        # Store numerators and denominators
         numerators = [
-            braces_and_height[3][1].copy().next_to(linoleum_sol[6], UP, buff=0.1),
-            braces_and_height[1][1].copy().next_to(linoleum_sol[14], UP, buff=0.1)
+            braces_and_height[3][1].copy().next_to(linoleum_sol[6], UP, buff=0.1),  # vertical
+            braces_and_height[1][1].copy().next_to(linoleum_sol[14], UP, buff=0.1)  # feed
         ]
         denominators = [
             braces_and_height[2][1].copy().next_to(linoleum_sol[6], DOWN, buff=0.1),
             braces_and_height[0][1].copy().next_to(linoleum_sol[14], DOWN, buff=0.1)
         ]
+
+        # Extracting the parts of equation into the variables
         overs = [linoleum_sol[6], linoleum_sol[14]]
         confidences = [linoleum_sol[2], linoleum_sol[10], linoleum_sol[18]]
         times_word = [linoleum_sol[9], linoleum_sol[17]]
         in_word = [linoleum_sol[3], linoleum_sol[11]]
 
-        questions = [Text(q).scale(0.3).next_to(self.pi_creature.bubble, UP) for q in [
-            "Существует ли ориг. слово?",
-            "На сколько мы в этом уверены?",
-            "Во сколько раз транслитирации больше, чем ориг. слова в вертикали?",
-            "На сколько мы уверены, что больше?",
-            "Во сколько раз транслитирации больше, чем ориг. слова в фиде?",
-            "На сколько мы уверены, что больше?"
-        ]
+        questions = [Text(q).scale(0.3).next_to(self.pi_creature.bubble, UP)
+                     for q in ["Существует ли ориг. слово?",
+                               "На сколько мы в этом уверены?",
+                               "Во сколько раз транслитирации больше, чем ориг. слова в вертикали?",
+                               "На сколько мы уверены, что больше?",
+                               "Во сколько раз транслитирации больше, чем ориг. слова в фиде?",
+                               "На сколько мы уверены, что больше?"]
                      ]
+
+        questions_copy = list(map(lambda q: q.copy(), questions))
 
         self.play(
             FadeIn(questions[0]),
@@ -2141,7 +2156,7 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
         self.wait()
         self.play(
             FadeIn(confidences[0]),
-            indicator.animate.move_to(get_indicator_pos(decision(1, 0, 0, 0, 0), indicator, scales_line))
+            indicator.animate.move_to(get_indicator_pos(decision(1, 0, 0, 0, 0, 0), indicator, scales_line))
         )
         self.wait()
         self.play(ReplacementTransform(questions[1], questions[2]))
@@ -2157,7 +2172,7 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
         self.wait()
         self.play(
             FadeIn(confidences[1]),
-            indicator.animate.move_to(get_indicator_pos(decision(1, 4487, 45, 0, 0), indicator, scales_line))
+            indicator.animate.move_to(get_indicator_pos(decision(1, 4487, 45, 0, 0, 0), indicator, scales_line))
         )
         self.play(ReplacementTransform(questions[3], questions[4]))
         self.wait()
@@ -2172,11 +2187,464 @@ class ReplaceBrands(PiCreatureScene, ThreeDScene):
         self.wait()
         self.play(
             FadeIn(confidences[2]),
-            indicator.animate.move_to(get_indicator_pos(decision(1, 4487, 45, 408, 45), indicator, scales_line))
+            indicator.animate.move_to(get_indicator_pos(decision(1, 4487, 45, 408, 45, 0), indicator, scales_line))
         )
         self.wait()
 
-        # self.say(questions[0], target_mode="maybe")
+        def vertical_num_updater(num):
+            num.set_value(vertical[0][1].height * 1000)
+            num.next_to(linoleum_sol[6], UP, buff=0.1)
 
-    def brand_dict_the_only_word(self):
-        pass
+        def feed_num_updater(num):
+            num.set_value(feed[0][1].height * 100)
+            num.next_to(linoleum_sol[14], UP, buff=0.1)
+
+        def vertical_denom_updater(num):
+            num.set_value(vertical[0][0].height * 1000)
+            num.next_to(linoleum_sol[6], DOWN, buff=0.1)
+
+        def feed_denom_updater(num):
+            num.set_value(feed[0][0].height * 100)
+            num.next_to(linoleum_sol[14], DOWN, buff=0.1)
+
+        numerators[0].add_updater(vertical_num_updater)
+        numerators[1].add_updater(feed_num_updater)
+        denominators[0].add_updater(vertical_denom_updater)
+        denominators[1].add_updater(feed_denom_updater)
+
+        def vertical_lower_brace_updater(b):
+            new_brace = Brace(vertical[0][1], RIGHT)
+            b.match_points(new_brace)
+
+        def feed_lower_brace_updater(b):
+            new_brace = Brace(feed[0][1], LEFT)
+            b.match_points(new_brace)
+
+        def vertical_upper_brace_updater(b):
+            new_brace = Brace(vertical[0][0], RIGHT)
+            b.match_points(new_brace)
+
+        def feed_upper_brace_updater(b):
+            new_brace = Brace(feed[0][0], LEFT)
+            b.match_points(new_brace)
+
+        braces_and_height[0][0].add_updater(feed_upper_brace_updater)
+        braces_and_height[1][0].add_updater(feed_lower_brace_updater)
+        braces_and_height[2][0].add_updater(vertical_upper_brace_updater)
+        braces_and_height[3][0].add_updater(vertical_lower_brace_updater)
+
+        def indicator_updater(ind):
+            ind.move_to(
+                get_indicator_pos(
+                    decision(
+                        1,
+                        int(vertical[0][0].height * 1000),
+                        int(vertical[0][1].height * 1000),
+                        int(feed[0][0].height * 100),
+                        int(feed[0][1].height * 100),
+                        0
+                    ),
+                    indicator,
+                    scales_line
+                )
+            )
+
+        indicator.add_updater(indicator_updater)
+
+        self.play(
+            FadeOut(questions[-1]),
+            feed[0][0].animate.stretch_to_fit_height(height=total_feed_height * 0.7, about_edge=UP),
+            feed[0][1].animate.stretch_to_fit_height(height=total_feed_height * 0.3, about_edge=DOWN),
+            vertical[0][0].animate.stretch_to_fit_height(height=total_feed_height * 0.97, about_edge=UP),
+            vertical[0][1].animate.stretch_to_fit_height(height=total_feed_height * 0.03, about_edge=DOWN)
+        )
+        self.wait()
+
+        self.play(
+            feed[0][0].animate.stretch_to_fit_height(height=total_feed_height * 0.1, about_edge=UP),
+            feed[0][1].animate.stretch_to_fit_height(height=total_feed_height * 0.9, about_edge=DOWN),
+            vertical[0][0].animate.stretch_to_fit_height(height=total_feed_height * 0.91, about_edge=UP),
+            vertical[0][1].animate.stretch_to_fit_height(height=total_feed_height * 0.09, about_edge=DOWN)
+        )
+        self.wait()
+
+        to_much = Text("Всё равно достаточно много", color=RED).scale(0.5).next_to(self.pi_creature.bubble, UP)
+        arrow = Arrow(to_much, braces_and_height[2][0].get_center(), color=RED)
+        self.play(FadeIn(to_much, arrow))
+        self.wait(2)
+
+        new_arrow = Arrow(to_much, linoleum_sol[-1].get_center(), color=RED)
+        self.play(
+            FadeIn(linoleum_sol[-1]),
+            arrow.animate.become(new_arrow),
+            indicator.animate.move_to(
+                get_indicator_pos(
+                    decision(
+                        1,
+                        int(vertical[0][0].height * 1000),
+                        int(vertical[0][1].height * 1000),
+                        int(feed[0][0].height * 100),
+                        int(feed[0][1].height * 100),
+                        0.123
+                    ),
+                    indicator,
+                    scales_line
+                )
+            )
+        )
+        self.wait()
+
+        self.play(FadeOut(to_much, arrow))
+        self.wait()
+
+        self.play(
+            feed[0][0].animate.stretch_to_fit_height(height=total_feed_height * 0.5, about_edge=UP),
+            feed[0][1].animate.stretch_to_fit_height(height=total_feed_height * 0.5, about_edge=DOWN),
+            vertical[0][0].animate.stretch_to_fit_height(height=total_feed_height * 0.95, about_edge=UP),
+            vertical[0][1].animate.stretch_to_fit_height(height=total_feed_height * 0.05, about_edge=DOWN)
+        )
+        self.wait()
+
+        self.play(
+            vertical[0][0].animate.stretch_to_fit_height(height=total_feed_height * 0.2, about_edge=UP),
+            vertical[0][1].animate.stretch_to_fit_height(height=total_feed_height * 0.8, about_edge=DOWN)
+        )
+        self.wait()
+
+        self.play(
+            FadeOut(
+                feed,
+                vertical,
+                *[b[0] for b in braces_and_height],
+                self.pi_creature.bubble,
+                self.pi_creature.bubble.content,
+                self.pi_creature,
+                linoleum_sol,
+                *numerators,
+                *denominators
+            )
+        )
+        self.questions = VGroup(*questions_copy).arrange(DOWN)
+        q_box = SurroundingRectangle(self.questions, color=WHITE)
+        self.questions = VGroup(self.questions, q_box)
+
+    def decision_formalization(self):
+        formal_eq = MathTex(
+            r"D(", r"\text{ориг}", ",", r"\text{транс}", ")", "=",
+            r"\{", "1", ",", "0", r"\ |\ ", r"\text{ориг. слово существует}", r"\}", r"\times -0.38", "+",
+            "{", r"\text{количество транс. в вертикали}", r"\over", r"\text{количество ориг. в вертикали}", "}",
+            r"\times 0.12", "+",
+            "{", r"\text{количество транс. в фиде}", r"\over", r"\text{количество ориг. в фиде}", "}",
+            r"\times 0.10", "-", "0.12",
+            tex_to_color_map={
+                r"\text{ориг}": RED,
+                r"\text{транс}": GREEN,
+                r"\text{количество транс. в вертикали}": GREEN,
+                r"\text{количество ориг. в вертикали}": RED,
+                r"\text{количество транс. в фиде}": GREEN,
+                r"\text{количество ориг. в фиде}": RED
+            }
+        ).scale(0.4)
+        formal_equation_parts = {
+            'D': formal_eq[:6],
+            'indicator': formal_eq[6:13],
+            'numerators': [formal_eq[15:17], formal_eq[22:24]],
+            'denominators': [formal_eq[18:20], formal_eq[25:27]],
+            'overs': [formal_eq[17], formal_eq[24]],
+            'confidences': [formal_eq[13:15], formal_eq[20:22], formal_eq[27]],
+            'bayes': formal_eq[-2:]
+        }
+        formal_equation_parts['indicator'][1].set_color(RED)
+        formal_equation_parts['indicator'][3].set_color(GREEN)
+
+        self.play(FadeIn(self.questions.next_to(self.module_label, DOWN)))
+
+        question_boxes = [SurroundingRectangle(q, color=YELLOW) for q in self.questions[0]]
+        self.play(Write(formal_equation_parts['D']))
+
+        self.play(Create(question_boxes[0]))
+        self.wait()
+        self.play(Write(formal_equation_parts['indicator']))
+
+        self.wait()
+        self.play(
+            Indicate(formal_equation_parts['indicator'][1], color=RED),
+            Indicate(formal_equation_parts['indicator'][-2], color=RED),
+        )
+        self.wait()
+        self.play(Indicate(formal_equation_parts['indicator'][3], color=GREEN))
+        self.wait()
+
+        self.play(ReplacementTransform(question_boxes[0], question_boxes[1]))
+        self.wait()
+        self.play(Write(formal_equation_parts['confidences'][0]))
+
+        self.play(ReplacementTransform(question_boxes[1], question_boxes[2]))
+        self.wait()
+        self.play(
+            FadeIn(
+                formal_equation_parts['numerators'][0],
+                formal_equation_parts['overs'][0],
+                formal_equation_parts['denominators'][0]
+            ),
+        )
+
+        self.play(ReplacementTransform(question_boxes[2], question_boxes[3]))
+        self.wait()
+        self.play(Write(formal_equation_parts['confidences'][1]))
+
+        self.play(ReplacementTransform(question_boxes[3], question_boxes[4]))
+        self.wait()
+        self.play(
+            FadeIn(
+                formal_equation_parts['numerators'][1],
+                formal_equation_parts['overs'][1],
+                formal_equation_parts['denominators'][1]
+            ),
+        )
+
+        self.play(ReplacementTransform(question_boxes[4], question_boxes[5]))
+        self.wait()
+        self.play(Write(formal_equation_parts['confidences'][2]))
+
+        self.play(
+            Uncreate(question_boxes[-1]),
+            Write(formal_equation_parts['bayes'])
+        )
+
+        self.wait()
+        self.play(FadeOut(self.questions))
+
+        equation_box = SurroundingRectangle(formal_eq, buff=0.5)
+        self.play(ShowPassingFlash(equation_box.copy().set_color(BLUE), run_time=2, time_width=0.5))
+        self.wait()
+
+        brand_list = self.vertical_brands_list.copy().scale(0.4).next_to(formal_equation_parts['D'][:-1], RIGHT)
+        trans_exists = VGroup(brand_list, formal_equation_parts['D'][:-1])
+        trans_exists_box = SurroundingRectangle(trans_exists, color=WHITE)
+        trans_exists_label = Text(
+            "Транслитирация существует",
+            width=0.9*trans_exists_box.width
+        ).next_to(trans_exists_box, UP)
+        trans_exists_stuff = VGroup(trans_exists, trans_exists_box, trans_exists_label)
+        self.play(
+            FadeIn(brand_list),
+            FadeOut(*[p for p in formal_eq if p not in trans_exists[1]])
+        )
+        self.play(Create(trans_exists_box), Write(trans_exists_label))
+
+        self.wait()
+
+        self.pi_creature.to_corner(DR)
+        self.think("А что если транслитерация не заведена?")
+
+
+    #
+    # def math_decision_equation(self):
+    #     """The decision equation written in math
+    #     """
+    #     equation = self.linoleum_equation
+    #
+    #     if any([len(self.numerators) != 2, len(self.denominators) != 2]):
+    #         raise Exception("Call the linoleum_decomposition first.")
+    #
+    #     def write_feed_to_vertical_eq(vert_data: Integer, feed_data: Integer, eq):
+    #         vert_data.clear_updaters()
+    #         feed_data.clear_updaters()
+    #         self.play(Write(eq[0]))
+    #         self.play(ReplacementTransform(vert_data, eq[1]))
+    #         self.play(Write(eq[2]), ReplacementTransform(feed_data, eq[5]))
+    #         self.wait()
+    #         self.play(FadeIn(eq[3:5]))
+    #
+    #     numerator_eq = Tex(
+    #         "Кол-во linoleum в вертикали = ",
+    #         f"3,626",
+    #         " = ",
+    #         f"15.97",
+    #         r" $\times$ ",
+    #         f"227"
+    #     ).scale(0.4).to_edge(LEFT)
+    #     write_feed_to_vertical_eq(self.numerators[0], self.numerators[1], numerator_eq)
+    #
+    #     denominator_eq = Tex(
+    #         "Кол-во линолеум в вертикали = ",
+    #         f"907",
+    #         " = ",
+    #         f"3.99",
+    #         r" $\times$ ",
+    #         f"227"
+    #     ).scale(0.4).next_to(numerator_eq, DOWN).to_edge(LEFT)
+    #     write_feed_to_vertical_eq(self.denominators[0], self.denominators[1], denominator_eq)
+    #
+    #     wider_equation = MathTex(
+    #         *[e.get_tex_string() for e in equation[:4]],
+    #         r"{",
+    #         r"\phantom{12345567891011}",
+    #         r"\over",
+    #         r"\phantom{1234556789101}",
+    #         r"}",
+    #         *[e.get_tex_string() for e in equation[9:]],
+    #     ).scale(0.4).move_to(equation)
+    #
+    #     num_denom_copies = [
+    #         numerator_eq[5].copy(),
+    #         denominator_eq[5].copy(),
+    #         numerator_eq[3:6].copy(),
+    #         denominator_eq[3:6].copy()
+    #     ]
+    #     self.play(
+    #         AnimationGroup(
+    #             ReplacementTransform(equation, wider_equation),
+    #             num_denom_copies[0].animate.next_to(wider_equation[14], UP, buff=0.1),
+    #             num_denom_copies[1].animate.next_to(wider_equation[14], DOWN, buff=0.1),
+    #             num_denom_copies[2].animate.next_to(wider_equation[6], UP, buff=0.1),
+    #             num_denom_copies[3].animate.next_to(wider_equation[6], DOWN, buff=0.1),
+    #             FadeOut(numerator_eq, denominator_eq)
+    #         )
+    #     )
+    #
+    #     math_eq = MathTex(
+    #         r"D(", "N", ",", "M", ",", "a, b)",
+    #         "=", r"\{1, 0\ |\ ", "N", r"> 0\}", r"\times -0.38",
+    #         r"+ {b \times ", "M", r"\over a \times", "N", "}", r"\times 0.12",
+    #         r"+ {", "M", r"\over", "N", "}", r"\times 0.1", "- 0.12",
+    #         substrings_to_isolate=[r"N", r"M"]
+    #     ).scale(0.4)
+    #     math_eq_parts = {
+    #         'left_part': math_eq[:7],
+    #         'indicator': math_eq[7:10],
+    #         'confidences': [math_eq[10], math_eq[16], math_eq[22]],
+    #         'ratios': [math_eq[11:16], math_eq[17:22]],
+    #         'bayes': math_eq[23]
+    #
+    #     }
+    #
+    #     math_eq.set_color_by_tex_to_color_map({
+    #         r"N": RED,
+    #         r"M": GREEN
+    #     })
+    #
+    #     N_label = Tex(
+    #         "$N$ - Кол-во оригинального слова в фиде",
+    #         color=RED
+    #     ).scale(0.4).next_to(math_eq[1], DOWN * 4)
+    #     M_label = Tex(
+    #         "$M$ - Кол-во транслитирированного слова в фиде",
+    #         color=GREEN
+    #     ).scale(0.4).next_to(N_label, DOWN)
+    #
+    #     self.play(FadeIn(math_eq_parts['left_part'], N_label, M_label))
+    #     self.play(FadeIn(math_eq_parts['indicator']))
+    #     self.play(FadeIn(math_eq_parts['confidences'][0]))
+    #     self.play(FadeIn(math_eq_parts['ratios'][0]))
+    #     self.play(FadeIn(math_eq_parts['confidences'][1]))
+    #     self.play(FadeIn(math_eq_parts['ratios'][1]))
+    #     self.play(FadeIn(math_eq_parts['confidences'][2]))
+    #     self.play(FadeIn(math_eq_parts['bayes']))
+    #
+    #     indicator_label = Text("Индикатор", color=YELLOW).next_to(math_eq_parts['indicator'], UP*2.5)
+    #     indicator_arrow = Arrow(indicator_label.get_center(), math_eq_parts['indicator'].get_center(), color=YELLOW)
+    #     self.play(FadeIn(indicator_label, indicator_arrow))
+    #     self.wait(2)
+    #
+    #     self.play(
+    #         FadeOut(wider_equation, M_label, N_label, indicator_label, indicator_arrow, *num_denom_copies),
+    #         math_eq.animate.next_to(self.module_label, DOWN)
+    #     )
+    #
+    #     self.math_equation_stuff['equation'] = math_eq
+    #     self.math_equation_stuff['parts'] = math_eq_parts
+    #
+    # def model_surface(self):
+    #     resolution_fa = 70
+    #     self.set_camera_orientation(zoom=0.5)
+    #
+    #     b_label = MathTex("b=")
+    #     a_label = MathTex("a=")
+    #     surface_display_data = VGroup(*[
+    #         VGroup(b_label, DecimalNumber(1.0, num_decimal_places=2)).arrange(RIGHT),
+    #         VGroup(a_label, DecimalNumber(10.99, num_decimal_places=2)).arrange(RIGHT)
+    #     ]).arrange(DOWN).scale(0.4).to_edge(RIGHT)
+    #
+    #     self.add_fixed_in_frame_mobjects(
+    #         self.math_equation_stuff['equation'],
+    #         self.module_label
+    #     )
+    #
+    #     def decision(feed_original, feed_trans, orig_factor, trans_factor):
+    #         """Decision equation.
+    #         """
+    #         x = feed_original
+    #         y = feed_trans
+    #         z = -0.388 * 1 + 0.122 * (y * trans_factor + 1) / (x * orig_factor + 1) + (y + 1) / (x + 1) * 0.103 - 0.123
+    #         return z
+    #
+    #     axes = ThreeDAxes(x_range=[0, 10, 1], y_range=[0, 10, 1], z_range=[0, 10, 1], tips=False)
+    #     labels = axes.get_axis_labels3D(
+    #         r"\text{кол-во ориг. в фиде }(N)",
+    #         r"\text{кол-во транс. в фиде }(M)",
+    #         r"\text{Решение }(D)"
+    #     )
+    #     labels[0].next_to(axes[0], DOWN*2)
+    #     labels[1].next_to(axes[1], UL)
+    #     labels[2].next_to(axes[2], UL)
+    #
+    #     def color_surface(sur):
+    #         for tile in sur:
+    #             dec = axes.c2p(*tile.get_center())[-1]
+    #             if dec > 0:
+    #                 tile.set_color(GREEN)
+    #             else:
+    #                 tile.set_color(RED)
+    #
+    #     self.play(Create(axes[:2]), Write(labels[:2]))
+    #     self.wait()
+    #     self.move_camera(phi=75 * DEGREES, theta=-75 * DEGREES, run_time=3)
+    #     self.play(Create(axes[-1]), Write(labels[-1]))
+    #     self.play(FadeIn(surface_display_data))
+    #     self.add_fixed_in_frame_mobjects(surface_display_data)
+    #     self.wait()
+    #
+    #     surfaces = VGroup(*[
+    #         Surface(
+    #             lambda u, v: axes.c2p(u, v, decision(u, v, 10.99, 1)),
+    #             u_range=[0, 10],
+    #             v_range=[0, 10],
+    #             resolution=(resolution_fa, resolution_fa)
+    #         ),
+    #         Surface(
+    #             lambda u, v: axes.c2p(u, v, decision(u, v, 11.48, 8.48)),
+    #             u_range=[0, 10],
+    #             v_range=[0, 10],
+    #             resolution=(resolution_fa, resolution_fa)
+    #         ),
+    #         Surface(
+    #             lambda u, v: axes.c2p(u, v, decision(u, v, 3.99, 15.97)),
+    #             u_range=[0, 10],
+    #             v_range=[0, 10],
+    #             resolution=(resolution_fa, resolution_fa)
+    #         )
+    #     ])
+    #     for surface in surfaces:
+    #         color_surface(surface)
+    #         surface.set_fill(opacity=0.8)
+    #         surface.set_stroke(width=0)
+    #
+    #     graph_stuff = VGroup(axes, labels, surfaces).shift(DOWN*4 + 3*RIGHT)
+    #     self.play(Create(surfaces[0]))
+    #     self.wait(3)
+    #     self.play(
+    #         # ReplacementTransform(surfaces[0], surfaces[1]),
+    #         ChangeDecimalToValue(surface_display_data[0][1], 8.48),
+    #         ChangeDecimalToValue(surface_display_data[1][1], 11.48)
+    #     )
+    #     self.wait(3)
+    #     self.play(
+    #         # ReplacementTransform(surfaces[1], surfaces[2]),
+    #         ChangeDecimalToValue(surface_display_data[0][1], 15.97),
+    #         ChangeDecimalToValue(surface_display_data[1][1], 3.99)
+    #     )
+    #     self.wait(3)
+    #
+    #     dot = Dot3D()
